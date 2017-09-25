@@ -23,12 +23,14 @@
 uint8_t CalcDeviceID(void);
 bool SaveSlaveID(uint8_t ID);
 bool LoadSavedID(uint8_t index, uint8_t* id);
+bool LoadNextSavedID(uint8_t index, uint8_t* NextID);
 
 //全局变量
 static uint8_t TxRxBytes;
 static uint8_t DeviceID;
 static uint8_t LockedSlaveID;
-static bool    isConnected;
+static uint8_t LockedSlaveIndex;
+static bool    LockedFlag;
 
 /*******************************************************************************
 *功能说明: 初始化为主机
@@ -44,7 +46,7 @@ void LT8920_MasterInit(uint8_t packet_length)
     //初始化内部变量
     TxRxBytes = packet_length;
     DeviceID = CalcDeviceID();
-    isConnected = false;
+    LockedFlag = false;
 }
 
 /*******************************************************************************
@@ -98,7 +100,8 @@ bool LT8920_FindSlave(void)
                 if(report_cmd == FUN_FIND_RESPONSE)
                 {
                     LockedSlaveID = id;
-                    isConnected = true;
+					LockedSlaveIndex = i;
+                    LockedFlag = true;
                     return true;
                 }
             }
@@ -122,27 +125,30 @@ bool LT8920_ChangeSlave(void)
     
     for(int i=0; i<MAX_SAVED_ID; i++)
     {
-        //调出从机ID
-        id = LoadSavedID(i);
+		//调出从机ID
+		if(LoadNextSavedID(LockedSlaveIndex+i, &id))
+		{
+			//往这个从机发数据
+			buf[0] = id;        			//id
+			buf[1] = LT8920_GetChannel();   //ch
+			LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, buf, 100);
         
-        //往这个从机发数据
-        buf[0] = id;        //id
-        buf[1] = TxRx_CH;   //ch
-        LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, buf, 100);
-        
-        //等待从机返回数据
-        if(LT8920_Receive(&report_id, &report_cmd, buf, 100))
-        {
-            //从机有回应
-            if(report_cmd == FUN_FIND_RESPONSE)
-            {
-                if(LockedSlaveID != id)
-                {
-                    LockedSlaveID = id;
-                    return true;
-                }
-            }
-        }
+			//等待从机返回数据
+			if(LT8920_Receive(&report_id, &report_cmd, buf, WAIT_SLAVE_RESPOND_MS))
+			{
+				//从机有回应
+				if(report_cmd == FUN_FIND_RESPONSE)
+				{
+					if(LockedSlaveID != id)
+					{
+						LockedSlaveID = id;
+						LockedSlaveIndex = i;
+						LockedFlag = true;
+						return true;
+					}
+				}
+			}
+		}
     }
     return false;
 }
@@ -167,45 +173,6 @@ bool LT8920_CommunicateToSlaveWithoutFeedback(uint8_t* tx)
     //FUN_CTRL_FORCE
 }    
 
-
-
-
-/*******************************************************************************
-*函 数 名: LT8900_Init
-*功能说明: LT8920芯片初始化函数
-*形    参：无
-*返 回 值: 无
-*******************************************************************************/
-void LT8920_Init(uint8_t packet_length)
-{
-    //利用stm32f030的cpuid计算出8位的id，用以标识器件
-    uint32_t CPU_ID= *(__IO uint32_t *)(0x1FFFF7AC);
-    uint8_t crc = 0;
-    for(int j=0; j<4; j++)
-    {
-        crc=crc^((uint8_t)CPU_ID);
-        for(int i = 8; i > 0; i--)
-        {
-            if(crc & 0x80)  crc = (crc<< 1)^0x31;
-            else            crc = crc<< 1;
-        }
-        CPU_ID >>= 8;
-    }
-    DeviceID = crc;
-
-	//初始化变量
-	TxRx_CH = 0;
-    TxRxBytes = packet_length;
-    LockedSlaveID = 0;
-    LockedMasterID = *(__IO uint8_t*)0x08003C00;
-    isConnected = false;
-
-    LT8920_CS_HIGH();
-    LT8920_RST_LOW();
-    HAL_Delay(2);
-	LT8920_RST_HIGH();
-	HAL_Delay(5);
-}
 
 
 
@@ -269,8 +236,19 @@ bool LoadSavedID(uint8_t index, uint8_t* id)
     
 }
 
+/*******************************************************************************
+*内部函数
+*功能说明: 读取flash中的ID下一个id
+*******************************************************************************/
+bool LoadNextSavedID(uint8_t index, uint8_t* NextID)
+{
+	
+}
 
-//计算本机ID
+/*******************************************************************************
+*内部函数
+*功能说明: //计算本机ID
+*******************************************************************************/
 uint8_t CalcDeviceID(void)
 {
     //利用stm32f030的cpuid计算出8位的id，用以标识器件
