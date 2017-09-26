@@ -1,6 +1,6 @@
 
 /*********************************************************
-1、手柄解码，识别按键值，读取模拟值。       
+PS2手柄stm32驱动
 **********************************************************/	 
 #ifndef __PSTWO_H
 #define __PSTWO_H
@@ -9,41 +9,44 @@
 #include "stm32f0xx_hal.h"
 #include "tim.h"
 #include "spi.h"
+#include <stdbool.h>
 
-#define DI   PBin(12)           //PB12  输入
 
-#define DO_H PBout(13)=1        //命令位高
-#define DO_L PBout(13)=0        //命令位低
+//操作宏定义
+#define PS2_CS_LOW()         HAL_GPIO_WritePin(PS2PAD_CS_GPIO_Port, PS2PAD_CS_Pin, GPIO_PIN_RESET)
+#define PS2_CS_HIGH()        HAL_GPIO_WritePin(PS2PAD_CS_GPIO_Port, PS2PAD_CS_Pin, GPIO_PIN_SET)
 
-#define CS_H PBout(14)=1       //CS拉高
-#define CS_L PBout(14)=0       //CS拉低
-
-#define CLK_H PBout(15)=1      //时钟拉高
-#define CLK_L PBout(15)=0      //时钟拉低
+//函数定义
+void PS2_Init(void);
+void PS2_SetSPIPort(void);
+void PS2_ReadData(uint8_t* keys);
+bool PS2_CheckButtonPress(uint16_t keys);
 
 
 //These are our button constants
-#define PSB_SELECT      1
-#define PSB_L3          2
-#define PSB_R3          3
-#define PSB_START       4
-#define PSB_PAD_UP      5
-#define PSB_PAD_RIGHT   6
-#define PSB_PAD_DOWN    7
-#define PSB_PAD_LEFT    8
-#define PSB_L2          9
-#define PSB_R2          10
-#define PSB_L1          11
-#define PSB_R1          12
-#define PSB_GREEN       13
-#define PSB_RED         14
-#define PSB_BLUE        15
-#define PSB_PINK        16
+#define PSB_SELECT      0x8000
+#define PSB_L3          0x4000
+#define PSB_R3          0x2000
+#define PSB_START       0x1000
+#define PSB_PAD_UP      0x0800
+#define PSB_PAD_RIGHT   0x0400
+#define PSB_PAD_DOWN    0x0200
+#define PSB_PAD_LEFT    0x0100
+#define PSB_L2          0x0080
+#define PSB_R2          0x0040
+#define PSB_L1          0x0020
+#define PSB_R1          0x0010
+#define PSB_TRIANGLE    0x0008
+#define PSB_CIRCLE      0x0004
+#define PSB_CROSS       0x0002
+#define PSB_SQUARE      0x0001
 
-#define PSB_TRIANGLE    13
-#define PSB_CIRCLE      14
-#define PSB_CROSS       15
-#define PSB_SQUARE      16
+#define PSB_GREEN       0x0008
+#define PSB_RED         0x0004
+#define PSB_BLUE        0x0002
+#define PSB_PINK        0x0001
+
+
 
 //#define WHAMMY_BAR		8
 

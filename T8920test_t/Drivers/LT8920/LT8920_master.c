@@ -16,14 +16,12 @@
 //常数宏定义
 #define LISTEN_MS 30
 #define WAIT_SLAVE_RESPOND_MS 100
-#define MAX_RSSI 20
 #define MAX_SAVED_ID 8
 
 //函数声明
 uint8_t CalcDeviceID(void);
-bool SaveSlaveID(uint8_t ID);
+uint8_t SaveSlaveID(uint8_t ID);
 bool LoadSavedID(uint8_t index, uint8_t* id);
-bool LoadNextSavedID(uint8_t index, uint8_t* NextID);
 
 //全局变量
 static uint8_t TxRxBytes;
@@ -62,18 +60,19 @@ bool LT8920_PairingRequest(uint32_t waiting_ms)
     
     //等待从机回应
     uint8_t respones, receiverID, receivedBytes;
-    bool return_value = false;
     if(LT8920_Receive(&receiverID, &respones, buf, &receivedBytes, waiting_ms))
     {
         if(respones == FUN_PAIR_RESPONSE)
         {
             //将从机的ID写入flash
-            SaveSlaveID(receiverID);
-            return_value = true;
+            LockedSlaveID = receiverID;
+            LockedSlaveIndex = SaveSlaveID(receiverID);
+            
+            return true;
         }  
     }
     
-    return return_value;
+    return false;
 }
 
 /*******************************************************************************
@@ -82,7 +81,7 @@ bool LT8920_PairingRequest(uint32_t waiting_ms)
 bool LT8920_FindSlave(void)
 {
     uint8_t id, buf[TxRxBytes];
-    uint8_t report_id,report_cmd;
+    uint8_t report_id,report_cmd, report_bytes;
     for(int i=0; i<MAX_SAVED_ID; i++)
     {
         //调出从机ID
@@ -94,21 +93,16 @@ bool LT8920_FindSlave(void)
             LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, buf, TxRxBytes, 100);
         
             //等待从机返回数据
-            if(LT8920_Receive(&report_id, &report_cmd, buf, TxRxBytes, WAIT_SLAVE_RESPOND_MS))
+            if(LT8920_Receive(&report_id, &report_cmd, buf, &report_bytes, WAIT_SLAVE_RESPOND_MS))
             {
-                //从机有回应
                 if(report_cmd == FUN_FIND_RESPONSE)
                 {
                     LockedSlaveID = id;
 					LockedSlaveIndex = i;
-                    LockedFlag = true;
+                    //LockedFlag = true;
                     return true;
                 }
             }
-        }
-        else
-        {
-            break;
         }
     }
     return false;
@@ -119,37 +113,37 @@ bool LT8920_FindSlave(void)
 *******************************************************************************/
 bool LT8920_ChangeSlave(void)
 {
-    //flash第15页
     uint8_t id, buf[TxRxBytes];
-    uint8_t report_id,report_cmd;
+    uint8_t report_id,report_cmd,report_bytes;
+    int idx = LockedSlaveIndex, i = 0;
     
-    for(int i=0; i<MAX_SAVED_ID; i++)
+    while(i++ < MAX_SAVED_ID)
     {
-		//调出从机ID
-		if(LoadNextSavedID(LockedSlaveIndex+i, &id))
+        //调出下一个从机的ID
+		if(LoadSavedID(idx, &id))
 		{
 			//往这个从机发数据
 			buf[0] = id;        			//id
 			buf[1] = LT8920_GetChannel();   //ch
-			LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, buf, 100);
+			LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, buf, TxRxBytes, 100);
         
 			//等待从机返回数据
-			if(LT8920_Receive(&report_id, &report_cmd, buf, WAIT_SLAVE_RESPOND_MS))
+			if(LT8920_Receive(&report_id, &report_cmd, buf, &report_bytes, WAIT_SLAVE_RESPOND_MS))
 			{
-				//从机有回应
 				if(report_cmd == FUN_FIND_RESPONSE)
 				{
-					if(LockedSlaveID != id)
-					{
-						LockedSlaveID = id;
-						LockedSlaveIndex = i;
-						LockedFlag = true;
-						return true;
-					}
+                    LockedSlaveID = id;
+					LockedSlaveIndex = idx;
+					//LockedFlag = true;
+					return true;
 				}
 			}
 		}
+        
+        if(++idx >= MAX_SAVED_ID) 
+            idx -= MAX_SAVED_ID;     
     }
+
     return false;
 }
 
@@ -158,9 +152,24 @@ bool LT8920_ChangeSlave(void)
 *******************************************************************************/
 bool LT8920_CommunicateToSlaveWithFeedback(uint8_t* tx, uint8_t* rx, uint8_t* lost_count)
 {
-    //ID=receiverID^remoterID
-    //FUN_CTRL_REQUEST
-    LT8920_Transmit(DeviceID, FUN_PAIR_REQUEST, tx, 100);
+    uint8_t report_id,report_cmd,report_bytes;
+
+    //发送数据
+	LT8920_Transmit(DeviceID, FUN_CTRL_REQUEST, tx, TxRxBytes, 100);
+        
+	//等待从机返回数据
+	if(LT8920_Receive(&report_id, &report_cmd, rx, &report_bytes, WAIT_SLAVE_RESPOND_MS))
+	{
+		if((report_cmd == FUN_CTRL_RESPONSE) && (report_id == LockedSlaveID))
+		{
+            lost_count = 0;
+			LockedFlag = true;
+			return true;
+		}
+	}
+    
+    lost_count ++;
+    return false;
 }
 
 
@@ -170,7 +179,9 @@ bool LT8920_CommunicateToSlaveWithFeedback(uint8_t* tx, uint8_t* rx, uint8_t* lo
 *******************************************************************************/
 bool LT8920_CommunicateToSlaveWithoutFeedback(uint8_t* tx)
 {
-    //FUN_CTRL_FORCE
+    //发送数据
+	LT8920_Transmit(DeviceID, FUN_CTRL_FORCE, tx, TxRxBytes, 100);
+    return true;
 }    
 
 
@@ -179,51 +190,42 @@ bool LT8920_CommunicateToSlaveWithoutFeedback(uint8_t* tx)
 /*******************************************************************************
 *内部函数
 *功能说明: 将ID写入flash
-*写入新数据返回1，原有数据和写入数据相同返回0
+*返回 index
 *******************************************************************************/
-bool SaveSlaveID(uint8_t ID)
+uint8_t SaveSlaveID(uint8_t ID)
 {
-    //最多纪录8个，FIFO
-    uint32_t addr = 0x08000000 + (15*1024);//写入第15页的位置
+    //最多纪录8个，FIFO，按32位整数写入
+    uint32_t addr = 0x08000000 + (15*1024);//第15页的位置
     uint32_t flashData = *(__IO uint32_t*)(addr);
     
     //检查当前ID是否存在,顺便读出原先的ID
-    bool appear = false;
-    uint8_t dat[8];
-    for(int i=0; i<8; i++)
+    uint8_t dat[MAX_SAVED_ID];
+    for(int i=0; i<MAX_SAVED_ID; i++)
     {
         flashData = *(__IO uint32_t*)(addr + (i*4));
         dat[i] = flashData & 0x000000ff;
         
-        if(dat[i] == receiverID)  appear = true;
+        if(dat[i] == ID)  return i;
     }
     
     //如果flash中没有此ID，则写入FIFO队列
-    if(appear)
+    HAL_FLASH_Unlock();
+    //擦除页
+    FLASH_EraseInitTypeDef f;
+    f.TypeErase = FLASH_TYPEERASE_PAGES;
+    f.PageAddress = addr;
+    f.NbPages = 1;
+    uint32_t PageError = 0;
+    HAL_FLASHEx_Erase(&f, &PageError);
+    //编程flash
+    HAL_FLASH_Program(TYPEPROGRAM_WORD, addr, (uint32_t)ID);
+    for(int i=0; i<MAX_SAVED_ID; i++)
     {
-        return false;
+        HAL_FLASH_Program(TYPEPROGRAM_WORD, (addr + i*4), (uint32_t)dat[i]);
     }
-    else
-    {
-        HAL_FLASH_Unlock();
-        //擦除页
-        FLASH_EraseInitTypeDef f;
-        f.TypeErase = FLASH_TYPEERASE_PAGES;
-        f.PageAddress = addr;
-        f.NbPages = 1;
-        uint32_t PageError = 0;
-        HAL_FLASHEx_Erase(&f, &PageError);
-
-        //编程flash
-        HAL_FLASH_Program(TYPEPROGRAM_WORD, addr, (uint32_t)receiverID);
-        for(int i=0; i<7; i++)
-        {
-            HAL_FLASH_Program(TYPEPROGRAM_WORD, addr + i*4, (uint32_t)dat[i]);
-        }
-        HAL_FLASH_Lock();
+    HAL_FLASH_Lock();
         
-        return true;
-    }
+    return 0;
 }
 
 
@@ -233,17 +235,21 @@ bool SaveSlaveID(uint8_t ID)
 *******************************************************************************/
 bool LoadSavedID(uint8_t index, uint8_t* id)
 {
+    uint32_t addr = 0x08000000 + (15*1024);//第15页的位置
+    uint32_t flashData = *(__IO uint32_t*)(addr + (index*4));
     
+    uint8_t ret = flashData & 0x000000ff;
+    if(ret != 0xff)
+    {
+        *id = ret;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-/*******************************************************************************
-*内部函数
-*功能说明: 读取flash中的ID下一个id
-*******************************************************************************/
-bool LoadNextSavedID(uint8_t index, uint8_t* NextID)
-{
-	
-}
 
 /*******************************************************************************
 *内部函数
