@@ -19,7 +19,7 @@
 #define MAX_SAVED_ID 8
 
 //函数声明
-uint8_t CalcDeviceID(void);
+uint8_t CalcMasterDeviceID(void);
 uint8_t SaveSlaveID(uint8_t ID);
 bool LoadSavedID(uint8_t index, uint8_t* id);
 
@@ -28,7 +28,7 @@ static uint8_t TxRxBytes;
 static uint8_t DeviceID;
 static uint8_t LockedSlaveID;
 static uint8_t LockedSlaveIndex;
-static bool    LockedFlag;
+//static bool    LockedFlag;
 
 /*******************************************************************************
 *功能说明: 初始化为主机
@@ -43,8 +43,8 @@ void LT8920_MasterInit(uint8_t packet_length)
     
     //初始化内部变量
     TxRxBytes = packet_length;
-    DeviceID = CalcDeviceID();
-    LockedFlag = false;
+    DeviceID = CalcMasterDeviceID();
+    //LockedFlag = false;
 }
 
 /*******************************************************************************
@@ -163,7 +163,7 @@ bool LT8920_CommunicateToSlaveWithFeedback(uint8_t* tx, uint8_t* rx, uint8_t* lo
 		if((report_cmd == FUN_CTRL_RESPONSE) && (report_id == LockedSlaveID))
 		{
             lost_count = 0;
-			LockedFlag = true;
+			//LockedFlag = true;
 			return true;
 		}
 	}
@@ -255,7 +255,7 @@ bool LoadSavedID(uint8_t index, uint8_t* id)
 *内部函数
 *功能说明: //计算本机ID
 *******************************************************************************/
-uint8_t CalcDeviceID(void)
+uint8_t CalcMasterDeviceID(void)
 {
     //利用stm32f030的cpuid计算出8位的id，用以标识器件
     uint32_t CPU_ID= *(__IO uint32_t *)(0x1FFFF7AC);

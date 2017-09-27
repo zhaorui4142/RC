@@ -9,16 +9,14 @@ PS2手柄stm32驱动
 #include "stm32f0xx_hal.h"
 #include "tim.h"
 #include "spi.h"
+#include "gpio.h"
 #include <stdbool.h>
 
 
 //操作宏定义
-#define ATT_CLR()         HAL_GPIO_WritePin(PS2PAD_CS_GPIO_Port, PS2PAD_CS_Pin, GPIO_PIN_RESET)
-#define ATT_SET()        HAL_GPIO_WritePin(PS2PAD_CS_GPIO_Port, PS2PAD_CS_Pin, GPIO_PIN_SET)
-#define SET(x,y) (x|=(1<<y))
-#define CLR(x,y) (x&=(~(1<<y)))
-#define CHK(x,y) (x & (1<<y))
-#define TOG(x,y) (x^=(1<<y))
+#define PS2X_ATT_CLR()         HAL_GPIO_WritePin(PS2PAD_CS_GPIO_Port, PS2PAD_CS_Pin, GPIO_PIN_RESET)
+#define PS2X_ATT_SET()        HAL_GPIO_WritePin(PS2PAD_CS_GPIO_Port, PS2PAD_CS_Pin, GPIO_PIN_SET)
+
 
 //常数宏定义
 //These are our button constants
@@ -79,19 +77,18 @@ PS2手柄stm32驱动
 #define PSAB_CROSS       15
 #define PSAB_SQUARE      16
 
+//全局函数声明区
+void     PS2X_SetSpiPort(void);								//设置SPI接口
+uint8_t  PS2X_ConfigGamepad(bool pressures, bool rumble);   //配置手柄
+bool     PS2X_ReadGamepad(bool motor1, uint8_t motor2);     //读取手柄数据
 
-//函数定义
-void PS2_Init(void);
-void PS2_SetSPIPort(void);
-void PS2_ReadData(uint8_t* keys);
-bool PS2_CheckButtonPress(uint16_t keys);
+bool     PS2X_IsButtonOnToggle(uint16_t button);            //按钮状态改变
+bool     PS2X_IsButtonOnPress(unsigned int button);         //按键被按下的一瞬间
+bool     PS2X_IsButtonOnRelease(unsigned int button);       //按键被松开的一瞬间
 
-
-
-extern uint8_t Data[9];
-extern uint16_t MASK[16];
-extern uint16_t Handkey;
-
+bool     PS2X_GetButtonState(uint16_t button);              //查询某个按键状态
+uint16_t PS2X_GetButtonData(void);                          //查询全部按钮的状态
+uint8_t  PS2X_GetAnalogValue(uint8_t button);               //查询模拟量输出
 
 
 #endif

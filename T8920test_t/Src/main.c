@@ -41,7 +41,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
-#include "LT8920.h"
+#include "LT8920_master.h"
 
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
@@ -98,14 +98,14 @@ int main(void)
   MX_CRC_Init();
 
   /* USER CODE BEGIN 2 */
-  LT8920_Init(10);
+  LT8920_MasterInit(10);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   //主机端程序
-  uint8_t buf[8] = {11,12,13,14,15,16,17,18};
+  //uint8_t buf[8] = {11,12,13,14,15,16,17,18};
   
       uint32_t addr = 0x08000000 + (15*1024);//写入第15页的位置
 

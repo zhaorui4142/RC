@@ -22,13 +22,12 @@ void WriteReg(uint8_t addr, uint8_t H, uint8_t L);
 uint16_t ReadReg(uint8_t addr);
 bool SaveRemoterID(uint8_t remoterID);
 uint8_t LoadRemoterID(void);
-uint8_t CalcDeviceID(void);
+uint8_t CalcSlaveDeviceID(void);
 
 //全局变量
 static uint8_t TxRxBytes;
 static uint8_t DeviceID;
 static uint8_t MasterID;
-static bool    isConnected;
 
 
 /*******************************************************************************
@@ -41,7 +40,7 @@ void LT8920_SlaveInit(uint8_t packet_length)
     
     //初始化内部变量
     TxRxBytes = packet_length;
-    DeviceID = CalcDeviceID();
+    DeviceID = CalcSlaveDeviceID();
     MasterID = LoadRemoterID();
 }
 
@@ -146,7 +145,6 @@ bool LT8920_WaitCommand(uint8_t* rx, uint8_t* feedback, uint32_t timeout, uint8_
 {
     //启动接收
     uint32_t startTime = HAL_GetTick();
-    uint8_t ch=0;
     uint8_t remoterID,remoterCMD,remoterBytes;
     
     if(LT8920_Receive(&remoterID, &remoterCMD, rx, &remoterBytes, timeout))
@@ -185,20 +183,20 @@ bool LT8920_WaitCommand(uint8_t* rx, uint8_t* feedback, uint32_t timeout, uint8_
                 LT8920_Transmit(DeviceID, FUN_CTRL_RESPONSE, feedback, TxRxBytes, 100);
                 lost_count = 0;
                 return true;
-            }break;
+            };
             
             //直接控制请求
             case FUN_CTRL_FORCE:
             {
                 lost_count = 0;
                 return true;
-            }break;
+            };
             
             default:
             {
                 lost_count++;
                 return false;
-            }break;
+            };
         }
     }
 
@@ -250,14 +248,19 @@ bool SaveRemoterID(uint8_t remoterID)
 
 uint8_t LoadRemoterID(void)
 {
+    uint32_t addr = 0x08000000 + (15*1024);
+
+    //读取数据
+    uint32_t flashData = *(__IO uint32_t*)(addr);
     
+    return (flashData & 0x000000FF);
 }
 
 /*******************************************************************************
 *内部函数
 *功能说明: //计算本机ID
 *******************************************************************************/
-uint8_t CalcDeviceID(void)
+uint8_t CalcSlaveDeviceID(void)
 {
     //利用stm32f030的cpuid计算出8位的id，用以标识器件
     uint32_t CPU_ID= *(__IO uint32_t *)(0x1FFFF7AC);
