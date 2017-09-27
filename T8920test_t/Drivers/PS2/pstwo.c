@@ -6,247 +6,303 @@
 //头文件包含
 #include "pstwo.h"
 
-#define DELAY_TIME  delay_us(5); 
-uint16_t Handkey;	// 按键值读取，零时存储。
-uint8_t Comd[2]={0x01,0x42};	//开始命令。请求数据
-uint8_t Data[9]={0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}; //数据存储数组
-uint16_t MASK[]={
-    PSB_SELECT,
-    PSB_L3,
-    PSB_R3 ,
-    PSB_START,
-    PSB_PAD_UP,
-    PSB_PAD_RIGHT,
-    PSB_PAD_DOWN,
-    PSB_PAD_LEFT,
-    PSB_L2,
-    PSB_R2,
-    PSB_L1,
-    PSB_R1 ,
-    PSB_GREEN,
-    PSB_RED,
-    PSB_BLUE,
-    PSB_PINK
-	};	//按键值与按键明
 
-//手柄接口初始化    输入  DI->PB12 
-//                  输出  DO->PB13    CS->PB14  CLK->PB15
-void PS2_Init(void)
+
+#define CTRL_CLK        5
+#define CTRL_CLK_HIGH   5
+#define CTRL_BYTE_DELAY 4
+
+
+static uint8_t enter_config[5]={0x01,0x43,0x00,0x01,0x00};
+static uint8_t type_read[9]={0x01,0x45,0x00,0x5A,0x5A,0x5A,0x5A,0x5A,0x5A};
+static uint8_t set_mode[9]={0x01,0x44,0x00,0x01,0x03,0x00,0x00,0x00,0x00};
+static uint8_t set_bytes_large[9]={0x01,0x4F,0x00,0xFF,0xFF,0x03,0x00,0x00,0x00};
+static uint8_t exit_config[9]={0x01,0x43,0x00,0x00,0x5A,0x5A,0x5A,0x5A,0x5A};
+static uint8_t enable_rumble[5]={0x01,0x4D,0x00,0x00,0x01};
+
+
+
+
+
+static uint8_t i;
+static uint16_t last_buttons;
+static uint16_t buttons;
+static uint32_t last_read;
+static uint8_t read_delay;
+static uint8_t controller_type;
+static bool en_Rumble;
+static bool en_Pressures;
+static uint8_t PS2data[21];
+
+
+
+
+
+
+bool PS2X_ButtonStateChanged(uint16_t button);//按钮状态改变
+bool PS2X_ButtonPressed(unsigned int button);//按键被按下
+bool PS2X_ButtonReleased(unsigned int button);//按键被松开
+bool PS2X_Button(uint16_t button);//查询某个按键状态
+uint16_t PS2X_ButtonDataByte();//查询全部按钮的状态
+uint8_t PS2X_Analog(uint8_t button);//查询模拟量输出
+bool PS2X_TxRxBytes(uint8_t* tx, uint8_t* rx, uint8_t bytes); //串行口输入输出
+bool PS2X_read_gamepad(bool motor1, uint8_t motor2);//读取数据
+void PS2X_sendCommandString(uint8_t* string, uint8_t len);
+void PS2X_reconfig_gamepad(void);
+
+
+/****************************************************************************************/
+//按钮状态改变
+bool PS2X_ButtonStateChanged(uint16_t button) 
 {
-    //输入  DI->PB12
-	RCC->APB2ENR|=1<<3;     //使能PORTB时钟
-	//GPIOB->CRH&=0XFFF0FFFF;//PB12设置成输入	默认下拉  
-	//GPIOB->CRH|=0X00080000;   
-
-    //  DO->PB13    CS->PB14  CLK->PB15
-	RCC->APB2ENR|=1<<3;    //使能PORTB时钟  	   	  	 
-	//GPIOB->CRH&=0X000FFFFF; 
-	//GPIOB->CRH|=0X33300000;//PB13、PB14、PB15 推挽输出   	 											  
-}
-
-//向手柄发送命令
-void PS2_Cmd(uint8_t CMD)
-{
-	volatile uint16_t ref=0x01;
-	Data[1] = 0;
-	for(ref=0x01;ref<0x0100;ref<<=1)
-	{
-		if(ref&CMD)
-		{
-			//DO_H;                   //输出一位控制位
-		}
-		//else DO_L;
-
-		//CLK_H;                        //时钟拉高
-		//DELAY_TIME;
-		//CLK_L;
-		//DELAY_TIME;
-		//CLK_H;
-		//if(DI)
-			//Data[1] = ref|Data[1];
-	}
-	//delay_us(16);
-}
-//判断是否为红灯模式,0x41=模拟绿灯，0x73=模拟红灯
-//返回值；0，红灯模式
-//		  其他，其他模式
-uint8_t PS2_RedLight(void)
-{
-	//CS_L;
-	PS2_Cmd(Comd[0]);  //开始命令
-	PS2_Cmd(Comd[1]);  //请求数据
-	//CS_H;
-	if( Data[1] == 0X73)   return 0 ;
-	else return 1;
-
-}
-//读取手柄数据
-void PS2_ReadData(void)
-{
-	volatile uint8_t byte=0;
-	volatile uint16_t ref=0x01;
-	//CS_L;
-	PS2_Cmd(Comd[0]);  //开始命令
-	PS2_Cmd(Comd[1]);  //请求数据
-	for(byte=2;byte<9;byte++)          //开始接受数据
-	{
-		for(ref=0x01;ref<0x100;ref<<=1)
-		{
-			//CLK_H;
-			//DELAY_TIME;
-			//CLK_L;
-			//DELAY_TIME;
-			//CLK_H;
-		      //if(DI)
-		      Data[byte] = ref|Data[byte];
-		}
-        //delay_us(16);
-	}
-	//CS_H;
+    return (((last_buttons ^ buttons) & button) > 0);
 }
 
-//对读出来的PS2的数据进行处理,只处理按键部分  
-//只有一个按键按下时按下为0， 未按下为1
-uint8_t PS2_DataKey()
+/****************************************************************************************/
+//按键被按下
+bool PS2X_ButtonPressed(unsigned int button)
 {
-	uint8_t index;
-
-	PS2_ClearData();
-	PS2_ReadData();
-
-	Handkey=(Data[4]<<8)|Data[3];     //这是16个按键  按下为0， 未按下为1
-	for(index=0;index<16;index++)
-	{	    
-		if((Handkey&(1<<(MASK[index]-1)))==0)
-		return index+1;
-	}
-	return 0;          //没有任何按键按下
+    return(PS2X_ButtonStateChanged(button) & PS2X_Button(button));
 }
 
-//得到一个摇杆的模拟量	 范围0~256
-uint8_t PS2_AnologData(uint8_t button)
+/****************************************************************************************/
+//按键被松开
+bool PS2X_ButtonReleased(unsigned int button)
 {
-	return Data[button];
+    return((PS2X_ButtonStateChanged(button)) & ((~last_buttons & button) > 0));
 }
 
-//清除数据缓冲区
-void PS2_ClearData()
+/****************************************************************************************/
+//查询某个按键状态
+bool PS2X_Button(uint16_t button) 
 {
-	uint8_t a;
-	for(a=0;a<9;a++)
-		Data[a]=0x00;
+    return ((~buttons & button) > 0);
 }
-/******************************************************
-Function:    void PS2_Vibration(uint8_t motor1, uint8_t motor2)
-Description: 手柄震动函数，
-Calls:		 void PS2_Cmd(uint8_t CMD);
-Input: motor1:右侧小震动电机 0x00关，其他开
-	   motor2:左侧大震动电机 0x40~0xFF 电机开，值越大 震动越大
-******************************************************/
-void PS2_Vibration(uint8_t motor1, uint8_t motor2)
+
+/****************************************************************************************/
+//查询全部按钮的状态
+uint16_t PS2X_ButtonDataByte()
 {
-	//CS_L;
-	//delay_us(16);
-    PS2_Cmd(0x01);  //开始命令
-	PS2_Cmd(0x42);  //请求数据
-	PS2_Cmd(0X00);
-	PS2_Cmd(motor1);
-	PS2_Cmd(motor2);
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	//CS_H;
-	//delay_us(16);  
+   return (~buttons);
 }
-//short poll
-void PS2_ShortPoll(void)
+
+/****************************************************************************************/
+//查询模拟量输出
+uint8_t PS2X_Analog(uint8_t button)
 {
-	//CS_L;
-	//delay_us(16);
-	PS2_Cmd(0x01);  
-	PS2_Cmd(0x42);  
-	PS2_Cmd(0X00);
-	PS2_Cmd(0x00);
-	PS2_Cmd(0x00);
-	//CS_H;
-	//delay_us(16);	
+   return PS2data[button];
 }
-//进入配置
-void PS2_EnterConfing(void)
+
+/****************************************************************************************/
+//串行口输入输出
+bool PS2X_TxRxBytes(uint8_t* tx, uint8_t* rx, uint8_t bytes) 
 {
-    //CS_L;
-	//delay_us(16);
-	PS2_Cmd(0x01);  
-	PS2_Cmd(0x43);  
-	PS2_Cmd(0X00);
-	PS2_Cmd(0x01);
-	PS2_Cmd(0x00);
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	//CS_H;
-	//delay_us(16);
+    if(HAL_SPI_TransmitReceive(&hspi1, tx, rx, bytes, 500) == HAL_OK)
+        return true;
+    else
+        return false;
 }
-//发送模式设置
-void PS2_TurnOnAnalogMode(void)
+
+
+/****************************************************************************************/
+//读取数据
+bool PS2X_read_gamepad(bool motor1, uint8_t motor2)
 {
-	//CS_L;
-	PS2_Cmd(0x01);  
-	PS2_Cmd(0x44);  
-	PS2_Cmd(0X00);
-	PS2_Cmd(0x01); //analog=0x01;digital=0x00  软件设置发送模式
-	PS2_Cmd(0xEE); //Ox03锁存设置，即不可通过按键“MODE”设置模式。
-				   //0xEE不锁存软件设置，可通过按键“MODE”设置模式。
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	PS2_Cmd(0X00);
-	//CS_H;
-	//delay_us(16);
+    //振动设置motor1  0xFF开，其他关，motor2  0x40~0xFF
+    //检测手柄等待时间
+    uint32_t ElapsedMsFromLastRead = HAL_GetTick() - last_read;
+
+    if (ElapsedMsFromLastRead > 1500) //waited to long
+        PS2X_reconfig_gamepad();
+
+    if(ElapsedMsFromLastRead < read_delay)  //waited too short
+        HAL_Delay(read_delay - ElapsedMsFromLastRead);
+
+    if(motor2 < 0x40)
+        motor2 = 0x40; //noting below 40 will make it spin
+
+    uint8_t TxBuf[21] = {0x01,0x42,0,motor1,motor2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+    // Try a few times to get valid data...
+    for (uint8_t RetryCnt = 0; RetryCnt < 5; RetryCnt++) 
+    {
+        // low enable joystick
+        ATT_CLR(); 
+
+        HAL_Delay(CTRL_BYTE_DELAY);
+        //Send the command to send button and joystick data;
+        PS2X_TxRxBytes(TxBuf, PS2data, 9); 
+
+        //if controller is in full data return mode, get the rest of data
+        if(PS2data[1] == 0x79)  
+            PS2X_TxRxBytes(TxBuf+9, PS2data+9, 12); 
+
+        // HI disable joystick
+        ATT_SET(); 
+    
+        // Check to see if we received valid data or not.  
+        // We should be in analog mode for our data to be valid (analog == 0x7_)
+        if ((PS2data[1] & 0xf0) == 0x70)
+            break;
+
+        // If we got to here, we are not in analog mode, try to recover...
+        PS2X_reconfig_gamepad(); // try to get back into Analog mode.
+        HAL_Delay(read_delay);
+   }
+
+   // If we get here and still not in analog mode (=0x7_), try increasing the read_delay...
+   if ((PS2data[1] & 0xf0) != 0x70) 
+   {
+      if (read_delay < 10)
+         read_delay++;   // see if this helps out...
+   }
+   
+    //store the previous buttons states
+    last_buttons = buttons; 
+   
+    //store as one value for multiple functions
+    buttons =  (uint16_t)(PS2data[4] << 8) + PS2data[3];   
+
+    last_read = HAL_GetTick();
+   
+    // 1 = OK = analog mode - 0 = NOK
+    return ((PS2data[1] & 0xf0) == 0x70);  
 }
-//振动设置
-void PS2_VibrationMode(void)
+
+
+/****************************************************************************************/
+//配置
+uint8_t PS2X_config_gamepad(uint8_t clk, uint8_t cmd, uint8_t att, uint8_t dat, bool pressures, bool rumble) 
 {
-	//CS_L;
-	//delay_us(16);
-	PS2_Cmd(0x01);  
-	PS2_Cmd(0x4D);  
-	PS2_Cmd(0X00);
-	PS2_Cmd(0x00);
-	PS2_Cmd(0X01);
-	//CS_H;
-	//delay_us(16);	
+    //new error checking. First, read gamepad a few times to see if it's talking
+    PS2X_read_gamepad(false, 0x00);
+    PS2X_read_gamepad(false, 0x00);
+
+    //see if it talked - see if mode came back. 
+    //If still anything but 41, 73 or 79, then it's not talking
+    if(PS2data[1] != 0x41 && PS2data[1] != 0x73 && PS2data[1] != 0x79)
+    { 
+        return 1; //return error code 1
+    }
+
+    //try setting mode, increasing delays if need be.
+    read_delay = 1;
+    
+    uint8_t RxBuf[9];
+    
+    for(int y = 0; y <= 10; y++) 
+    {
+        PS2X_sendCommandString(enter_config, sizeof(enter_config));
+
+        //read type
+        HAL_Delay(CTRL_BYTE_DELAY);
+        ATT_CLR(); 
+        HAL_Delay(CTRL_BYTE_DELAY);
+        PS2X_TxRxBytes(type_read, RxBuf, 9); 
+        ATT_SET(); 
+
+        controller_type = RxBuf[3];
+
+        PS2X_sendCommandString(set_mode, sizeof(set_mode));
+        
+        if(rumble)
+        {
+            PS2X_sendCommandString(enable_rumble, sizeof(enable_rumble));
+            en_Rumble = true; 
+        }
+        if(pressures)
+        {
+            PS2X_sendCommandString(set_bytes_large, sizeof(set_bytes_large));
+            en_Pressures = true;
+        }
+        
+        PS2X_sendCommandString(exit_config, sizeof(exit_config));
+
+        PS2X_read_gamepad(false, 0x00);
+
+        if(pressures)
+        {
+            if(PS2data[1] == 0x79)
+                break;
+            if(PS2data[1] == 0x73)
+                return 3;
+        }
+
+        if(PS2data[1] == 0x73)
+            break;
+
+        if(y == 10)
+        {
+            return 2; //exit function with error
+        }
+        read_delay += 1; //add 1ms to read_delay
+    }
+    return 0; //no error if here
 }
-//完成并保存配置
-void PS2_ExitConfing(void)
+
+/****************************************************************************************/
+void PS2X_sendCommandString(uint8_t* string, uint8_t len) 
 {
-    //CS_L;
-	//delay_us(16);
-	PS2_Cmd(0x01);  
-	PS2_Cmd(0x43);  
-	PS2_Cmd(0X00);
-	PS2_Cmd(0x00);
-	PS2_Cmd(0x5A);
-	PS2_Cmd(0x5A);
-	PS2_Cmd(0x5A);
-	PS2_Cmd(0x5A);
-	PS2_Cmd(0x5A);
-	//CS_H;
-	//delay_us(16);
+    uint8_t rx[len];
+    ATT_CLR(); // low enable joystick
+    PS2X_TxRxBytes(string, rx, len); 
+    ATT_SET(); //high disable joystick
+    HAL_Delay(read_delay);                  //wait a few
 }
-//手柄配置初始化
-void PS2_SetInit(void)
+
+/****************************************************************************************/
+uint8_t PS2X_readType() 
 {
-	PS2_ShortPoll();
-	PS2_ShortPoll();
-	PS2_ShortPoll();
-	PS2_EnterConfing();		//进入配置模式
-	PS2_TurnOnAnalogMode();	//“红绿灯”配置模式，并选择是否保存
-	PS2_VibrationMode();	//开启震动模式
-	PS2_ExitConfing();		//完成并保存配置
+  if(controller_type == 0x03)
+    return 1;
+  else if(controller_type == 0x01)
+    return 2;
+  else if(controller_type == 0x0C)  
+    return 3;  //2.4G Wireless Dual Shock PS2 Game Controller
+	
+  return 0;
 }
+
+/****************************************************************************************/
+void PS2X_enableRumble() 
+{
+  PS2X_sendCommandString(enter_config, sizeof(enter_config));
+  PS2X_sendCommandString(enable_rumble, sizeof(enable_rumble));
+  PS2X_sendCommandString(exit_config, sizeof(exit_config));
+  en_Rumble = true;
+}
+
+/****************************************************************************************/
+bool PS2X_enablePressures() 
+{
+  PS2X_sendCommandString(enter_config, sizeof(enter_config));
+  PS2X_sendCommandString(set_bytes_large, sizeof(set_bytes_large));
+  PS2X_sendCommandString(exit_config, sizeof(exit_config));
+
+  PS2X_read_gamepad(false, 0x00);
+  PS2X_read_gamepad(false, 0x00);
+
+  if(PS2data[1] != 0x79)
+    return false;
+
+  en_Pressures = true;
+    return true;
+}
+
+/****************************************************************************************/
+void PS2X_reconfig_gamepad()
+{
+  PS2X_sendCommandString(enter_config, sizeof(enter_config));
+  PS2X_sendCommandString(set_mode, sizeof(set_mode));
+  if (en_Rumble)
+    PS2X_sendCommandString(enable_rumble, sizeof(enable_rumble));
+  if (en_Pressures)
+    PS2X_sendCommandString(set_bytes_large, sizeof(set_bytes_large));
+  PS2X_sendCommandString(exit_config, sizeof(exit_config));
+}
+
+/****************************************************************************************/
+
 
 
 
