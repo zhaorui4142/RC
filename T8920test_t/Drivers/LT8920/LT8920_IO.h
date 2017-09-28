@@ -30,6 +30,7 @@
 
 //初始化
 void LT8920_Init(void);
+void LT8920_ConfigSPI(void);
 
 //选择一个未被占用的通道
 int  LT8920_SelectIdleChannel(uint8_t ch_start, uint8_t ch_end, uint32_t listen_ms, uint8_t max_rssi);   

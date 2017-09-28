@@ -36,6 +36,22 @@ static bool en_Pressures,en_Rumble;
 
 
 /****************************************************************************************/
+//配置SPI端口
+void PS2X_ConfigSPI(void)
+{
+    hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+    hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+
+    hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+    hspi1.Init.FirstBit = SPI_FIRSTBIT_LSB;
+
+    if (HAL_SPI_Init(&hspi1) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
+/****************************************************************************************/
 //按钮状态改变
 bool PS2X_IsButtonOnToggle(uint16_t button) 
 {

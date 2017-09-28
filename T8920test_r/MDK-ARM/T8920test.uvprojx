@@ -485,9 +485,14 @@
           <GroupName>Drivers/LT8920</GroupName>
           <Files>
             <File>
-              <FileName>LT8920.c</FileName>
+              <FileName>LT8920_IO.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Drivers\LT8920\LT8920.c</FilePath>
+              <FilePath>..\Drivers\LT8920\LT8920_IO.c</FilePath>
+            </File>
+            <File>
+              <FileName>LT8920_slave.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\LT8920\LT8920_slave.c</FilePath>
             </File>
           </Files>
         </Group>

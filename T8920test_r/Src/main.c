@@ -40,7 +40,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
-#include "LT8920.h"
+#include "LT8920_slave.h"
 
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
@@ -64,6 +64,7 @@ PUTCHAR_PROTOTYPE
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Error_Handler(void);
+bool CheckTimeout(uint32_t start_time, uint32_t timeout);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -95,36 +96,65 @@ int main(void)
   MX_TIM17_Init();
   MX_USART1_UART_Init();
 
-  /* USER CODE BEGIN 2 */  
-  LT8920_Init();
+    /* USER CODE BEGIN 2 */  
+    LT8920_SlaveInit(4);
+    
+    uint32_t start = HAL_GetTick();
+    printf("slave power on!\n");
+    while(1)
+    {
+        if(LT8920_WaitPairing(500))
+            {
+                printf("pair ok!\n");
+                break;
+            }
+            
+        /*if(!CheckTimeout(start, 1100))
+        {
+            //开机的前1秒钟时间用于等待配对和连接
+            
 
-  /* USER CODE END 2 */
+        }
+        else
+        {
+            //开机的后两秒用于等待连接，再往后要考虑进入省电模式了
+            if(LT8920_WaitConnect(500))
+            {
+                printf("connect ok!\n");
+                break;
+            }
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-    uint8_t buf[8] = {11,12,13,14,15,16,17,18};
-  while (1)
-  {
-  /* USER CODE END WHILE */
+        }*/
+        
+        
+    }
+    /* USER CODE END 2 */
 
-  /* USER CODE BEGIN 3 */
-      for(int i=0; i<1000; i++)
-      Delay_us(2000);
-      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-      if(LT8920_Receive(8, buf,1000) == true)
-      {
-          printf("receive ok!\n");
-          printf("%d %d %d %d %d %d %d %d ", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]);
-      }
-          
-      else
-          printf("err");
-      //HAL_Delay(500);
-      for(int i=0; i<1000; i++)
-      Delay_us(2000);
-      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-  }
-  /* USER CODE END 3 */
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    uint8_t RxBuf[8],LostCount;
+    uint8_t TxBuf[8] = {11,12,13,14,15,16,17,18};
+    while (1)
+    {
+        //从机等待接收
+        if(LT8920_WaitCommand(RxBuf, TxBuf, 100, &LostCount))
+        {
+            printf("receive ok!\n");
+            printf("%d %d %d %d", RxBuf[0], RxBuf[1], RxBuf[2], RxBuf[3]);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+            HAL_Delay(100);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+        }
+
+    }
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+    
+    /* USER CODE END 3 */
 
 }
 
@@ -184,7 +214,21 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+//计算是否超时
+bool CheckTimeout(uint32_t start_time, uint32_t timeout)
+{
+    uint32_t tick = HAL_GetTick();
+    uint32_t ellipsed;
+    if(tick >= start_time)
+        ellipsed =  tick - start_time;
+    else
+        ellipsed =  (0xFFFFFFFF - start_time) + tick;
+    
+    if(ellipsed >= timeout)
+        return true;
+    else
+        return false;
+}
 /* USER CODE END 4 */
 
 /**

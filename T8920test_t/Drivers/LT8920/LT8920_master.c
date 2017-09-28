@@ -40,7 +40,7 @@ void LT8920_MasterInit(uint8_t packet_length)
     
     //自动选择通道
     LT8920_SelectIdleChannel(8, 80, 100, 20);
-    
+    printf("Select ch = %d \n",LT8920_GetChannel());
     //初始化内部变量
     TxRxBytes = packet_length;
     DeviceID = CalcMasterDeviceID();
@@ -56,12 +56,13 @@ bool LT8920_PairingRequest(uint32_t waiting_ms)
     uint8_t buf[TxRxBytes];
     buf[0] = DeviceID;
     buf[1] = LT8920_GetChannel();//发送使用的频道
-    LT8920_Transmit(DeviceID, FUN_PAIR_REQUEST, buf, TxRxBytes, 100);
+    if(LT8920_Transmit(DeviceID, FUN_PAIR_REQUEST, buf, TxRxBytes, 100))
+        printf("send over \n");
     
     //等待从机回应
     uint8_t respones, receiverID, receivedBytes;
     if(LT8920_Receive(&receiverID, &respones, buf, &receivedBytes, waiting_ms))
-    {
+    {;
         if(respones == FUN_PAIR_RESPONSE)
         {
             //将从机的ID写入flash

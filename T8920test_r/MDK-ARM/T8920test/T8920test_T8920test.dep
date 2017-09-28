@@ -645,8 +645,8 @@ I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim.h)(0x59ACC09F)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim_ex.h)(0x59ACC09F)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h)(0x59ACC09F)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h)(0x59ACC09F)
-F (..\Drivers\LT8920\LT8920.c)(0x59B11202)(-c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/LT8920 --C99-I.\RTE\_T8920test-I"D:\Program Files\Keil_v5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"D:\Program Files\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\1.4.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F030 -DUSE_HAL_DRIVER -DSTM32F030x6-o t8920test\lt8920.o --omf_browse t8920test\lt8920.crf --depend t8920test\lt8920.d)
-I (..\Drivers\LT8920\LT8920.h)(0x59B0FF3D)
+F (..\Drivers\LT8920\LT8920_IO.c)(0x59CCB49C)(-c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/LT8920 --C99-I.\RTE\_T8920test-I"D:\Program Files\Keil_v5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"D:\Program Files\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\1.4.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F030 -DUSE_HAL_DRIVER -DSTM32F030x6-o t8920test\lt8920_io.o --omf_browse t8920test\lt8920_io.crf --depend t8920test\lt8920_io.d)
+I (..\Drivers\LT8920\LT8920_IO.h)(0x59CC8A34)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h)(0x59ACC09F)
 I (../Inc/stm32f0xx_hal_conf.h)(0x59B0C019)
 I (../Inc/main.h)(0x59B0C019)
@@ -683,6 +683,45 @@ I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h)(0x59ACC09F)
 I (../Inc/tim.h)(0x59B0C019)
 I (../Inc/spi.h)(0x59B0C019)
 I (D:\Program Files\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x57F606B8)
+F (..\Drivers\LT8920\LT8920_slave.c)(0x59CCC62F)(-c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/LT8920 --C99-I.\RTE\_T8920test-I"D:\Program Files\Keil_v5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"D:\Program Files\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\1.4.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F030 -DUSE_HAL_DRIVER -DSTM32F030x6-o t8920test\lt8920_slave.o --omf_browse t8920test\lt8920_slave.crf --depend t8920test\lt8920_slave.d)
+I (..\Drivers\LT8920\LT8920_IO.h)(0x59CC8A34)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h)(0x59ACC09F)
+I (../Inc/stm32f0xx_hal_conf.h)(0x59B0C019)
+I (../Inc/main.h)(0x59B0C019)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_def.h)(0x59ACC09F)
+I (../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h)(0x59ACC09C)
+I (../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f030x6.h)(0x59ACC09C)
+I (../Drivers/CMSIS/Include/core_cm0.h)(0x59ACC09E)
+I (D:\Program Files\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57F606B8)
+I (../Drivers/CMSIS/Include/core_cmInstr.h)(0x59ACC09E)
+I (../Drivers/CMSIS/Include/cmsis_armcc.h)(0x59ACC09E)
+I (../Drivers/CMSIS/Include/core_cmFunc.h)(0x59ACC09E)
+I (../Drivers/CMSIS/Device/ST/STM32F0xx/Include/system_stm32f0xx.h)(0x59ACC09C)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h)(0x59ACC09F)
+I (D:\Program Files\Keil_v5\ARM\ARMCC\include\stdio.h)(0x57F606B8)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc_ex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio_ex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_dma.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_dma_ex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_cortex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_flash.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_flash_ex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_i2c_ex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_pwr_ex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi_ex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim_ex.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h)(0x59ACC09F)
+I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h)(0x59ACC09F)
+I (../Inc/tim.h)(0x59B0C019)
+I (../Inc/spi.h)(0x59B0C019)
+I (D:\Program Files\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x57F606B8)
+I (..\Drivers\LT8920\LT8920_slave.h)(0x59CA0E75)
 F (../Src/stm32f0xx_it.c)(0x59B0C019)(-c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/LT8920 --C99-I.\RTE\_T8920test-I"D:\Program Files\Keil_v5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"D:\Program Files\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\1.4.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F030 -DUSE_HAL_DRIVER -DSTM32F030x6-o t8920test\stm32f0xx_it.o --omf_browse t8920test\stm32f0xx_it.crf --depend t8920test\stm32f0xx_it.d)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h)(0x59ACC09F)
 I (../Inc/stm32f0xx_hal_conf.h)(0x59B0C019)
@@ -718,7 +757,7 @@ I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_tim_ex.h)(0x59ACC09F)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h)(0x59ACC09F)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h)(0x59ACC09F)
 I (../Inc/stm32f0xx_it.h)(0x59B0C019)
-F (../Src/main.c)(0x59B1111E)(-c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/LT8920 --C99-I.\RTE\_T8920test-I"D:\Program Files\Keil_v5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"D:\Program Files\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\1.4.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F030 -DUSE_HAL_DRIVER -DSTM32F030x6-o t8920test\main.o --omf_browse t8920test\main.crf --depend t8920test\main.d)
+F (../Src/main.c)(0x59CCC590)(-c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/LT8920 --C99-I.\RTE\_T8920test-I"D:\Program Files\Keil_v5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"D:\Program Files\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\1.4.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F030 -DUSE_HAL_DRIVER -DSTM32F030x6-o t8920test\main.o --omf_browse t8920test\main.crf --depend t8920test\main.d)
 I (../Inc/main.h)(0x59B0C019)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h)(0x59ACC09F)
 I (../Inc/stm32f0xx_hal_conf.h)(0x59B0C019)
@@ -756,7 +795,7 @@ I (../Inc/spi.h)(0x59B0C019)
 I (../Inc/tim.h)(0x59B0C019)
 I (../Inc/usart.h)(0x59B0C019)
 I (../Inc/gpio.h)(0x59B0C018)
-I (../Drivers/LT8920/LT8920.h)(0x59B0FF3D)
+I (../Drivers/LT8920/LT8920_slave.h)(0x59CA0E75)
 I (D:\Program Files\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x57F606B8)
 F (../Src/stm32f0xx_hal_msp.c)(0x59B0C019)(-c --cpu Cortex-M0 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc -I ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I ../Drivers/CMSIS/Include -I ../Drivers/LT8920 --C99-I.\RTE\_T8920test-I"D:\Program Files\Keil_v5\ARM\PACK\ARM\CMSIS\5.0.1\CMSIS\Include"-I"D:\Program Files\Keil_v5\ARM\PACK\Keil\STM32F0xx_DFP\1.4.0\Device\Include"-D__UVISION_VERSION="523" -D_RTE_ -DSTM32F030 -DUSE_HAL_DRIVER -DSTM32F030x6-o t8920test\stm32f0xx_hal_msp.o --omf_browse t8920test\stm32f0xx_hal_msp.crf --depend t8920test\stm32f0xx_hal_msp.d)
 I (../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h)(0x59ACC09F)

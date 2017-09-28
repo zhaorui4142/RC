@@ -65,6 +65,7 @@ PUTCHAR_PROTOTYPE
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void Error_Handler(void);
+bool CheckTimeout(uint32_t start_time, uint32_t timeout);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -97,64 +98,58 @@ int main(void)
   MX_USART1_UART_Init();
   MX_CRC_Init();
 
-  /* USER CODE BEGIN 2 */
-  LT8920_MasterInit(10);
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  //主机端程序
-  //uint8_t buf[8] = {11,12,13,14,15,16,17,18};
-  
-      uint32_t addr = 0x08000000 + (15*1024);//写入第15页的位置
-
-    //读取数据
-    uint32_t flashData = *(__IO uint32_t*)(addr);
+    /* USER CODE BEGIN 2 */
+    LT8920_MasterInit(4);
     
-  printf("read: %x \n",flashData);
+    uint32_t start = HAL_GetTick();
+    printf("master power on!\n");
+    while(1)
+    {
+                    //主机发送配对请求
+            if(LT8920_PairingRequest(100))
+            {
+                printf("master pair ok!\n");
+                break;
+            }
+        //if(!CheckTimeout(start, 2000))
+        //{
+
+        //}
+    }
+    
+    //LT8920_FindSlave(void);
+    
+    
+    /* USER CODE END 2 */
+
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    uint8_t TxBuf[4] = {0x01,0x02,0x03,0x04};
+    uint8_t RxBuf[4],LostCount;
+    while (1)
+    {
   
-        //解锁flash
-        HAL_FLASH_Unlock();
-
-        //擦除页
-        FLASH_EraseInitTypeDef f;
-        f.TypeErase = FLASH_TYPEERASE_PAGES;
-        f.PageAddress = addr;
-        f.NbPages = 1;
-
-        uint32_t PageError = 0;
-        HAL_FLASHEx_Erase(&f, &PageError);
-
-        //编程flash
-        HAL_FLASH_Program(TYPEPROGRAM_WORD, addr, --flashData);
-
-        //重新上锁
-        HAL_FLASH_Lock();
-        printf("write: %x \n", (uint32_t)(__IO uint32_t*)(addr));
-        printf("write_8bit: %x \n", *(__IO uint8_t*)(addr));
+        //读一次按键
+      
+        //发送一次数据
+        if(LT8920_CommunicateToSlaveWithFeedback(TxBuf, RxBuf, &LostCount))
+        {
+            printf("send ok!\n");
+            printf("%d %d %d %d", RxBuf[0], RxBuf[1], RxBuf[2], RxBuf[3]);
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+            HAL_Delay(100);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+        }
         
-  while (1)
-  {
-  /* USER CODE END WHILE */
+    }
+    /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
-      //读一次按键
-      
-      //发送一次数据
-      //LT8920_Transmit(8, buf,1000);
-      //接收一次数据
-
-
-      //延时
-      HAL_Delay(1000);
-      
-      
-      
-      //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-      //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-  }
-  /* USER CODE END 3 */
+    /* USER CODE BEGIN 3 */
+  
+    /* USER CODE END 3 */
 
 }
 
@@ -214,7 +209,21 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+//计算是否超时
+bool CheckTimeout(uint32_t start_time, uint32_t timeout)
+{
+    uint32_t tick = HAL_GetTick();
+    uint32_t ellipsed;
+    if(tick >= start_time)
+        ellipsed =  tick - start_time;
+    else
+        ellipsed =  (0xFFFFFFFF - start_time) + tick;
+    
+    if(ellipsed >= timeout)
+        return true;
+    else
+        return false;
+}
 /* USER CODE END 4 */
 
 /**

@@ -8,14 +8,14 @@ t8920test\lt8920_master.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_def
 t8920test\lt8920_master.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h
 t8920test\lt8920_master.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f030x6.h
 t8920test\lt8920_master.o: ../Drivers/CMSIS/Include/core_cm0.h
-t8920test\lt8920_master.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+t8920test\lt8920_master.o: D:\Program Files\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 t8920test\lt8920_master.o: ../Drivers/CMSIS/Include/core_cmInstr.h
 t8920test\lt8920_master.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
 t8920test\lt8920_master.o: ../Drivers/CMSIS/Include/core_cmFunc.h
 t8920test\lt8920_master.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/system_stm32f0xx.h
 t8920test\lt8920_master.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h
 t8920test\lt8920_master.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h
-t8920test\lt8920_master.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+t8920test\lt8920_master.o: D:\Program Files\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 t8920test\lt8920_master.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc_ex.h
 t8920test\lt8920_master.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio.h
 t8920test\lt8920_master.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio_ex.h
@@ -38,5 +38,5 @@ t8920test\lt8920_master.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uar
 t8920test\lt8920_master.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h
 t8920test\lt8920_master.o: ../Inc/tim.h
 t8920test\lt8920_master.o: ../Inc/spi.h
-t8920test\lt8920_master.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+t8920test\lt8920_master.o: D:\Program Files\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 t8920test\lt8920_master.o: ..\Drivers\LT8920\LT8920_master.h

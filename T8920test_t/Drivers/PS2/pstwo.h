@@ -78,7 +78,7 @@ PS2手柄stm32驱动
 #define PSAB_SQUARE      16
 
 //全局函数声明区
-void     PS2X_SetSpiPort(void);								//设置SPI接口
+void     PS2X_ConfigSPI(void);								//设置SPI接口
 uint8_t  PS2X_ConfigGamepad(bool pressures, bool rumble);   //配置手柄
 bool     PS2X_ReadGamepad(bool motor1, uint8_t motor2);     //读取手柄数据
 

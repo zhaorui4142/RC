@@ -37,5 +37,5 @@ t8920test\main.o: ../Inc/spi.h
 t8920test\main.o: ../Inc/tim.h
 t8920test\main.o: ../Inc/usart.h
 t8920test\main.o: ../Inc/gpio.h
-t8920test\main.o: ../Drivers/LT8920/LT8920.h
+t8920test\main.o: ../Drivers/LT8920/LT8920_slave.h
 t8920test\main.o: D:\Program Files\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
