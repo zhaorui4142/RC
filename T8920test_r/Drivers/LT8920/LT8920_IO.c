@@ -48,7 +48,7 @@ void LT8920_ConfigSPI(void)
 void LT8920_Init(void)
 {
 	//初始化变量
-	TxRxChannel = 0;
+	TxRxChannel = 0x30;
 
     LT8920_CS_HIGH();
     LT8920_RST_LOW();
@@ -57,12 +57,12 @@ void LT8920_Init(void)
 	HAL_Delay(5);
 
     //初始化寄存器
-	WriteReg( 0, 0x6f, 0xef );
+	WriteReg( 0, 0x6f, 0xe0 );
 	WriteReg( 1, 0x56, 0x81 );
 	WriteReg( 2, 0x66, 0x17 );
 	WriteReg( 4, 0x9c, 0xc9 );
 	WriteReg( 5, 0x66, 0x37 );
-	WriteReg( 7, 0x00, 0x00 );//TX_EN[8] RX_EN[7] RF_PLL_CH_NO[6:0]  channel is 2402Mhz
+	WriteReg( 7, 0x00, 0x30 );//TX_EN[8] RX_EN[7] RF_PLL_CH_NO[6:0]  channel is 2402Mhz
 	WriteReg( 8, 0x6c, 0x90 );
 	WriteReg( 9, 0x48, 0x00 );//PA最大电流和增益
 	WriteReg(10, 0x7f, 0xfd );//XTAL_OSC_EN
@@ -80,10 +80,10 @@ void LT8920_Init(void)
 	WriteReg(33, 0x3f, 0xc7 );
 	WriteReg(34, 0x20, 0x00 );
 	WriteReg(35, 0x03, 0x00 );//重发次数3次
-	WriteReg(36, 0x03, 0x80 );
+	WriteReg(36, 0xA4, 0x42 );//
 	WriteReg(37, 0x03, 0x80 );
 	WriteReg(38, 0x5a, 0x5a );
-	WriteReg(39, 0x03, 0x80 );
+	WriteReg(39, 0xC2, 0x51 );//
 	WriteReg(40, 0x44, 0x02 );
 	WriteReg(41, 0xb0, 0x00 );//CRC is ON; scramble is OFF; 关闭AUTO_ACK
 	WriteReg(42, 0xfd, 0xb0 );//等待RX_ACK时间 176us
@@ -92,6 +92,41 @@ void LT8920_Init(void)
 	WriteReg(45, 0x05, 0x52 );		 //62.5k
 	WriteReg(50, 0x00, 0x00 );
     HAL_Delay(100);
+    
+        printf("reg0: %x \n",ReadReg(0));HAL_Delay(100);
+    printf("reg1: %x \n",ReadReg(1));HAL_Delay(100);
+    printf("reg2: %x \n",ReadReg(2));HAL_Delay(100);
+    printf("reg4: %x \n",ReadReg(4));HAL_Delay(100);
+    printf("reg5: %x \n",ReadReg(5));HAL_Delay(100);
+    printf("reg7: %x \n",ReadReg(7));HAL_Delay(100);
+    printf("reg8: %x \n",ReadReg(8));HAL_Delay(100);
+    printf("reg9: %x \n",ReadReg(9));HAL_Delay(100);
+    printf("reg10: %x \n",ReadReg(10));HAL_Delay(100);
+    printf("reg11: %x \n",ReadReg(11));HAL_Delay(100);
+    printf("reg12: %x \n",ReadReg(12));HAL_Delay(100);
+    printf("reg13: %x \n",ReadReg(13));HAL_Delay(100);
+    printf("reg22: %x \n",ReadReg(22));HAL_Delay(100);
+    printf("reg23: %x \n",ReadReg(23));HAL_Delay(100);
+    printf("reg24: %x \n",ReadReg(24));HAL_Delay(100);
+    printf("reg25: %x \n",ReadReg(25));HAL_Delay(100);
+    printf("reg26: %x \n",ReadReg(26));HAL_Delay(100);
+    printf("reg27: %x \n",ReadReg(27));HAL_Delay(100);
+    printf("reg28: %x \n",ReadReg(28));HAL_Delay(100);
+    printf("reg32: %x \n",ReadReg(32));HAL_Delay(100);
+    printf("reg33: %x \n",ReadReg(33));HAL_Delay(100);
+    printf("reg34: %x \n",ReadReg(34));HAL_Delay(100);
+    printf("reg35: %x \n",ReadReg(35));HAL_Delay(100);
+    printf("reg36: %x \n",ReadReg(36));HAL_Delay(100);
+    printf("reg37: %x \n",ReadReg(37));HAL_Delay(100);
+    printf("reg38: %x \n",ReadReg(38));HAL_Delay(100);
+    printf("reg39: %x \n",ReadReg(39));HAL_Delay(100);
+    printf("reg40: %x \n",ReadReg(40));HAL_Delay(100);
+    printf("reg41: %x \n",ReadReg(41));HAL_Delay(100);
+    printf("reg42: %x \n",ReadReg(42));HAL_Delay(100);
+    printf("reg43: %x \n",ReadReg(43));HAL_Delay(100);
+    printf("reg44: %x \n",ReadReg(44));HAL_Delay(100);
+    printf("reg45: %x \n",ReadReg(45));HAL_Delay(100);
+    printf("reg50: %x \n",ReadReg(50));HAL_Delay(100);
 }
 
 /*******************************************************************************
@@ -266,42 +301,29 @@ bool LT8920_Receive(uint8_t* deviceID, uint8_t* fun, uint8_t* data, uint8_t *len
     //等待接收到第一个字节
      while(HAL_GetTick() - start < timeout)
     {
+        //数据包接收完后pkt才置位
         if(LT8920_PKT_READ() != GPIO_PIN_RESET)
         {
-            //读出fifo中数据
-            LT8920_CS_LOW();
-            Delay_us(1);
-            //写入地址
-            HAL_SPI_Transmit(&hspi1, &addr, 1, 500);
-            Delay_us(1);
-            //接收数据长度,
-            HAL_SPI_Receive(&hspi1, len, 1, 500);
-            Delay_us(1);
-            break;
-        }
-    }
-    
-	//等待数据接收完成
-    while(HAL_GetTick() - start < timeout)
-    {
-        if((LT8920_PKT_READ() != GPIO_PIN_RESET) && (((ReadReg(52) & 0x3F00) >> 8) >= *len))
-        {
+            HAL_Delay(50);
             //CRC校验
             if((ReadReg(48) & 0x8000) == 0)
-            {   
+            {
                 //读出fifo中数据
                 LT8920_CS_LOW();
                 Delay_us(1);
                 //写入地址
                 HAL_SPI_Transmit(&hspi1, &addr, 1, 500);
                 Delay_us(1);
+                //接收数据长度,
+                HAL_SPI_Receive(&hspi1, len, 1, 500);
+                LT8920_CS_HIGH();
                 //接收ID
                 HAL_SPI_Receive(&hspi1, deviceID, 1, 500);
                 //接收功能码
                 HAL_SPI_Receive(&hspi1, fun, 1, 500);
                 Delay_us(1);
                 //读取剩下的数据
-                for(int i=0; i < (*len)-3; i++)
+                for(int i=0; i < (*len)-2; i++)
                 {
                     HAL_SPI_Receive(&hspi1, data++, 1, 500);
                     Delay_us(1);
@@ -311,14 +333,10 @@ bool LT8920_Receive(uint8_t* deviceID, uint8_t* fun, uint8_t* data, uint8_t *len
                 
                 //TX_EN=0 RX_EN=0
                 WriteReg(7, 0x00, TxRxChannel); 
-                
+                printf("ReceiveBytes: %x %x %x %x %x %x %x\n",*len, *deviceID, *fun, data[0], data[1],data[2],data[3]);
                 //计算实际的数据长度
-                (*len) -= 3;
+                (*len) -= 2;
                 return true;       
-            }
-            else
-            {
-                break;
             }
         }
     }
@@ -365,7 +383,7 @@ void LT8920_ScanRSSI(uint8_t* rssi_max, uint8_t* rssi_avg, int num)
 *******************************************************************************/
 void LT8920_SetChannel(uint8_t ch)
 {
-    TxRxChannel = ch;
+    TxRxChannel = ch+0x30;
     WriteReg(7, 0x00, ch);
     Delay_us(1);
 }
@@ -376,7 +394,7 @@ void LT8920_SetChannel(uint8_t ch)
 *******************************************************************************/
 uint8_t LT8920_GetChannel(void)
 {
-    return TxRxChannel;
+    return TxRxChannel-0x30;
 }
 
 

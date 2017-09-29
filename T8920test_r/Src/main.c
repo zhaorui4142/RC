@@ -106,7 +106,7 @@ int main(void)
         if(LT8920_WaitPairing(500))
             {
                 printf("pair ok!\n");
-                break;
+                //break;
             }
             
         /*if(!CheckTimeout(start, 1100))
@@ -133,7 +133,7 @@ int main(void)
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     uint8_t RxBuf[8],LostCount;
-    uint8_t TxBuf[8] = {11,12,13,14,15,16,17,18};
+    uint8_t TxBuf[8];
     while (1)
     {
         //从机等待接收

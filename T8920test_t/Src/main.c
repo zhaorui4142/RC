@@ -42,6 +42,7 @@
 /* USER CODE BEGIN Includes */
 #include "stdio.h"
 #include "LT8920_master.h"
+#include "LT8920_IO.h"
 
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
@@ -103,14 +104,17 @@ int main(void)
     
     uint32_t start = HAL_GetTick();
     printf("master power on!\n");
+    HAL_Delay(100);
+    printf("Select ch = %d \n",LT8920_GetChannel());
     while(1)
     {
                     //主机发送配对请求
-            if(LT8920_PairingRequest(100))
+            if(LT8920_PairingRequest(500))
             {
                 printf("master pair ok!\n");
-                break;
+                //break;
             }
+            HAL_Delay(500);
         //if(!CheckTimeout(start, 2000))
         //{
 
