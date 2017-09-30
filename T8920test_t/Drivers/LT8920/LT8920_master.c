@@ -29,22 +29,29 @@ static uint8_t DeviceID;
 static uint8_t LockedSlaveID;
 static uint8_t LockedSlaveIndex;
 //static bool    LockedFlag;
+static uint8_t TxBuf[10];
 
 /*******************************************************************************
 *功能说明: 初始化为主机
 *******************************************************************************/
-void LT8920_MasterInit(uint8_t packet_length)
+bool LT8920_MasterInit(uint8_t packet_length)
 {
     //初始化寄存器和芯片
-    LT8920_Init();
-    
-    //自动选择通道
-    LT8920_SelectIdleChannel(0, 80, 100, 20);
+    for(int i=0; i<3; i++)
+    {
+        if(LT8920_Init())
+        {
+            //自动选择通道
+            LT8920_SelectIdleChannel(0, 80, 100, 20);
 
-    //初始化内部变量
-    TxRxBytes = packet_length;
-    DeviceID = CalcMasterDeviceID();
-    //LockedFlag = false;
+            //初始化内部变量
+            TxRxBytes = packet_length;
+            DeviceID = CalcMasterDeviceID();
+            //LockedFlag = false;
+            return true;
+        }
+    }
+    return false;
 }
 
 /*******************************************************************************
@@ -53,30 +60,30 @@ void LT8920_MasterInit(uint8_t packet_length)
 bool LT8920_PairingRequest(uint32_t waiting_ms)
 {
     //发送广播数据包
-    uint8_t buf[TxRxBytes];
-    buf[0] = DeviceID;
-    buf[1] = LT8920_GetChannel();//发送使用的频道
-    buf[2] = 0x03;
-    buf[3] = 0x04;
-    printf("DeviceID= %x \n", buf[0]);
-     printf("channel=ch %x \n", buf[1]);
-    if(LT8920_Transmit(DeviceID, FUN_PAIR_REQUEST, buf, TxRxBytes, 100))
-        printf("send over \n");
+    //uint8_t buf[TxRxBytes];
+    TxBuf[0] = DeviceID;
+    TxBuf[1] = LT8920_GetChannel();//发送使用的频道
     
-    //等待从机回应
-    uint8_t respones, receiverID, receivedBytes;
-    if(LT8920_Receive(&receiverID, &respones, buf, &receivedBytes, waiting_ms))
-    {;
-        if(respones == FUN_PAIR_RESPONSE)
-        {
-            //将从机的ID写入flash
-            LockedSlaveID = receiverID;
-            LockedSlaveIndex = SaveSlaveID(receiverID);
-            
-            return true;
-        }  
+    if(++TxBuf[3]==255)
+    {
+        TxBuf[2] ++;
     }
     
+    if(LT8920_Transmit(DeviceID, FUN_PAIR_REQUEST, TxBuf, TxRxBytes, 100))
+    {
+        //等待从机回应
+        uint8_t respones, receiverID, receivedBytes;
+        if(LT8920_Receive(&receiverID, &respones, TxBuf, &receivedBytes, waiting_ms))
+        {
+            if(respones == FUN_PAIR_RESPONSE)
+            {
+                //将从机的ID写入flash
+                LockedSlaveID = receiverID;
+                LockedSlaveIndex = SaveSlaveID(receiverID);
+                return true;
+            }  
+        }
+    }
     return false;
 }
 

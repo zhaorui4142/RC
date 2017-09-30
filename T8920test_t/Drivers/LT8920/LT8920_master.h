@@ -28,7 +28,7 @@
 //全局函数声明
 
 //初始化
-void LT8920_MasterInit(uint8_t packet_length);
+bool LT8920_MasterInit(uint8_t packet_length);
 bool LT8920_PairingRequest(uint32_t waiting_ms);//主机发送配对请求
 bool LT8920_FindSlave(void);
 bool LT8920_ChangeSlave(void);

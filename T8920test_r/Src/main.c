@@ -101,13 +101,11 @@ int main(void)
     
     uint32_t start = HAL_GetTick();
     printf("slave power on!\n");
-    while(1)
+    
+    if(LT8920_WaitPairing(500))
     {
-        if(LT8920_WaitPairing(500))
-            {
-                printf("pair ok!\n");
-                //break;
-            }
+        printf("pair ok!\n");
+    }
             
         /*if(!CheckTimeout(start, 1100))
         {
@@ -127,7 +125,6 @@ int main(void)
         }*/
         
         
-    }
     /* USER CODE END 2 */
 
     /* Infinite loop */

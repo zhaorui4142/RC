@@ -29,7 +29,7 @@
 //全局函数声明
 
 //初始化
-void LT8920_Init(void);
+bool LT8920_Init(void);
 void LT8920_ConfigSPI(void);
 
 //选择一个未被占用的通道

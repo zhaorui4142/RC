@@ -99,22 +99,25 @@ int main(void)
   MX_USART1_UART_Init();
   MX_CRC_Init();
 
+    printf("master power on!\n");
     /* USER CODE BEGIN 2 */
-    LT8920_MasterInit(4);
+    if(LT8920_MasterInit(4))
+    {
+        printf("LT8920 init ok!\n");
+    }
     
     uint32_t start = HAL_GetTick();
-    printf("master power on!\n");
+    
     HAL_Delay(100);
     printf("Select ch = %d \n",LT8920_GetChannel());
     while(1)
     {
                     //主机发送配对请求
-            if(LT8920_PairingRequest(500))
+            if(LT8920_PairingRequest(100))
             {
                 printf("master pair ok!\n");
                 //break;
             }
-            HAL_Delay(500);
         //if(!CheckTimeout(start, 2000))
         //{
 

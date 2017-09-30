@@ -33,15 +33,24 @@ static uint8_t MasterID;
 /*******************************************************************************
 *功能说明: //初始化
 *******************************************************************************/
-void LT8920_SlaveInit(uint8_t packet_length)
+bool LT8920_SlaveInit(uint8_t packet_length)
 {
     //初始化寄存器和芯片
-    LT8920_Init();
-    
-    //初始化内部变量
-    TxRxBytes = packet_length;
-    DeviceID = CalcSlaveDeviceID();
-    MasterID = LoadRemoterID();
+    for(int i=0; i<3; i++)
+    {
+        if(LT8920_Init())
+        {
+            //自动选择通道
+            LT8920_SelectIdleChannel(0, 80, 100, 20);
+
+            //初始化内部变量
+            TxRxBytes = packet_length;
+            DeviceID = CalcSlaveDeviceID();
+            MasterID = LoadRemoterID();
+            return true;
+        }
+    }
+    return false;
 }
 
 /*******************************************************************************
@@ -92,8 +101,8 @@ bool LT8920_WaitPairing(uint32_t waiting_ms)
         }
         
         //切换频道
-        if(ch >= 80)    ch  = 0;
-        else            ch += 8;
+        //if(ch >= 80)    ch  = 0;
+        //else            ch += 8;
     }
 
     return false;

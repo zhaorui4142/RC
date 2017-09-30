@@ -26,7 +26,7 @@
 #define FUN_FIND_RESPONSE  0x23
 
 //全局函数声明
-void LT8920_SlaveInit(uint8_t packet_length);                                                   //初始化
+bool LT8920_SlaveInit(uint8_t packet_length);                                                   //初始化
 bool LT8920_WaitPairing(uint32_t waiting_ms);                                                   //从机等待配对
 bool LT8920_WaitConnect(uint32_t waiting_ms);                                                   //从机等待连接
 bool LT8920_WaitCommand(uint8_t* rx, uint8_t* feedback, uint32_t timeout, uint8_t* lost_count); //从机等待接收
