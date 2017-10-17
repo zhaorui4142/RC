@@ -100,12 +100,15 @@ int main(void)
     LT8920_SlaveInit(4);
     
     uint32_t start = HAL_GetTick();
-    printf("slave power on!\n");
+    printf("Receiver power on!\n");
     
-    if(LT8920_WaitPairing(500))
-    {
-        printf("pair ok!\n");
-    }
+    
+        if(LT8920_WaitPairing(500))
+        {
+            printf("pair ok!\n");
+        }
+    while(1) ;
+    
             
         /*if(!CheckTimeout(start, 1100))
         {
@@ -129,8 +132,8 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    uint8_t RxBuf[8],LostCount;
-    uint8_t TxBuf[8];
+    uint8_t RxBuf[32],LostCount;
+    uint8_t TxBuf[32];
     while (1)
     {
         //从机等待接收

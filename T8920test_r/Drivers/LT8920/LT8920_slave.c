@@ -28,6 +28,9 @@ uint8_t CalcSlaveDeviceID(void);
 static uint8_t TxRxBytes;
 static uint8_t DeviceID;
 static uint8_t MasterID;
+static uint8_t RxBuf[32];
+static uint8_t TxBuf[32];
+static uint8_t remoterID,remoterCMD,remoterBytes;
 
 
 /*******************************************************************************
@@ -60,9 +63,8 @@ bool LT8920_WaitPairing(uint32_t waiting_ms)
 {
     
     uint32_t startTime = HAL_GetTick();
-    uint8_t buf[TxRxBytes], ch=0;
-    uint8_t remoterID,remoterCMD,remoterBytes;
-    
+    uint8_t ch=0;
+
     //检测超时
     while((HAL_GetTick() - startTime) < waiting_ms)
     {
@@ -70,20 +72,19 @@ bool LT8920_WaitPairing(uint32_t waiting_ms)
         LT8920_SetChannel(ch);
         
          //接收广播数据包
-        if(LT8920_Receive(&remoterID, &remoterCMD, buf, &remoterBytes, LISTEN_MS))
-        {printf("received ch = %d \n",ch);
+        if(LT8920_Receive(&remoterID, &remoterCMD, RxBuf, &remoterBytes, LISTEN_MS))
+        {
             //配对请求
             if(remoterCMD == FUN_PAIR_REQUEST)
             {
-                //回应广播数据包
-                WriteReg(35, 0x07, 0x00 );//重发次数临时改为7次
-                HAL_Delay(1);
-                LT8920_Transmit(DeviceID, FUN_PAIR_RESPONSE, buf, TxRxBytes, 100);
-                WriteReg(35, 0x03, 0x00 );//重发次数改回3次
-                HAL_Delay(1);
-            
                 //设定频道
-                LT8920_SetChannel(buf[1]);            
+                LT8920_SetChannel(RxBuf[1]); 
+                
+                //回应广播数据包
+                HAL_Delay(1);
+                LT8920_Transmit(DeviceID, FUN_PAIR_RESPONSE, TxBuf, TxRxBytes, 100);
+                HAL_Delay(1);
+                          
                 //记录主机ID
                 SaveRemoterID(remoterID);
                 MasterID = remoterID;
@@ -93,16 +94,16 @@ bool LT8920_WaitPairing(uint32_t waiting_ms)
             if((remoterCMD == FUN_FIND_SLAVE) && (remoterID == MasterID))
             {
                 //回应请求
-                LT8920_Transmit(DeviceID, FUN_FIND_RESPONSE, buf, TxRxBytes, 100);
+                LT8920_Transmit(DeviceID, FUN_FIND_RESPONSE, RxBuf, TxRxBytes, 100);
                 //设定频道
-                LT8920_SetChannel(buf[1]); 
+                LT8920_SetChannel(RxBuf[1]); 
                 return true;
             }
         }
         
         //切换频道
-        //if(ch >= 80)    ch  = 0;
-        //else            ch += 8;
+        if(ch >= LT8920_CH_TOP)    ch  = 0;
+        else            ch += LT8920_CH_INTERVAL;
     }
 
     return false;
@@ -116,8 +117,7 @@ bool LT8920_WaitPairing(uint32_t waiting_ms)
 bool LT8920_WaitConnect(uint32_t waiting_ms)
 {
     uint32_t startTime = HAL_GetTick();
-    uint8_t buf[TxRxBytes], ch=0;
-    uint8_t remoterID,remoterCMD,remoterBytes;
+    uint8_t  ch=0;
     
     //检测超时
     while((HAL_GetTick() - startTime) < waiting_ms)
@@ -126,15 +126,15 @@ bool LT8920_WaitConnect(uint32_t waiting_ms)
         LT8920_SetChannel(ch);
         
          //接收广播数据包
-        if(LT8920_Receive(&remoterID, &remoterCMD, buf, &remoterBytes, LISTEN_MS))
+        if(LT8920_Receive(&remoterID, &remoterCMD, RxBuf, &remoterBytes, LISTEN_MS))
         {
             //连接请求
             if((remoterCMD == FUN_FIND_SLAVE) && (remoterID == MasterID))
             {
                 //回应请求
-                LT8920_Transmit(DeviceID, FUN_FIND_RESPONSE, buf, TxRxBytes, 100);
+                LT8920_Transmit(DeviceID, FUN_FIND_RESPONSE, TxBuf, TxRxBytes, 100);
                 //设定频道
-                LT8920_SetChannel(buf[1]); 
+                LT8920_SetChannel(TxBuf[1]); 
                 return true;
             }
         }
@@ -154,7 +154,6 @@ bool LT8920_WaitCommand(uint8_t* rx, uint8_t* feedback, uint32_t timeout, uint8_
 {
     //启动接收
     uint32_t startTime = HAL_GetTick();
-    uint8_t remoterID,remoterCMD,remoterBytes;
     
     if(LT8920_Receive(&remoterID, &remoterCMD, rx, &remoterBytes, timeout))
     {

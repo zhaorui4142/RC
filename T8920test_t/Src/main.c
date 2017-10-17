@@ -43,6 +43,7 @@
 #include "stdio.h"
 #include "LT8920_master.h"
 #include "LT8920_IO.h"
+#include "pstwo.h"
 
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
@@ -99,25 +100,29 @@ int main(void)
   MX_USART1_UART_Init();
   MX_CRC_Init();
 
-    printf("master power on!\n");
+    printf("Transmeter power on!\n");
     /* USER CODE BEGIN 2 */
-    if(LT8920_MasterInit(4))
-    {
-        printf("LT8920 init ok!\n");
-    }
     
-    uint32_t start = HAL_GetTick();
+    PS2X_ConfigSPI();
+    uint8_t ret = PS2X_ConfigGamepad(false, true);
+    printf("gamepad init: %d \n", ret);
+    //if(LT8920_MasterInit(4))
+    //{
+        //printf("LT8920 init ok!\n");
+    //}
     
-    HAL_Delay(100);
-    printf("Select ch = %d \n",LT8920_GetChannel());
+    //uint32_t start = HAL_GetTick();
+    
+    //HAL_Delay(100);
+    //printf("Select ch = %d \n",LT8920_GetChannel());
     while(1)
     {
                     //主机发送配对请求
-            if(LT8920_PairingRequest(100))
-            {
-                printf("master pair ok!\n");
+            //if(LT8920_PairingRequest(100))
+            //{
+                //printf("master pair ok!\n");
                 //break;
-            }
+            //}
         //if(!CheckTimeout(start, 2000))
         //{
 
@@ -131,25 +136,25 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    uint8_t TxBuf[4] = {0x01,0x02,0x03,0x04};
-    uint8_t RxBuf[4],LostCount;
+    //uint8_t TxBuf[4] = {0x01,0x02,0x03,0x04};
+    //uint8_t RxBuf[4],LostCount;
     while (1)
     {
   
         //读一次按键
       
         //发送一次数据
-        if(LT8920_CommunicateToSlaveWithFeedback(TxBuf, RxBuf, &LostCount))
-        {
-            printf("send ok!\n");
-            printf("%d %d %d %d", RxBuf[0], RxBuf[1], RxBuf[2], RxBuf[3]);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
-            HAL_Delay(100);
-        }
-        else
-        {
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-        }
+        //if(LT8920_CommunicateToSlaveWithFeedback(TxBuf, RxBuf, &LostCount))
+        //{
+            //printf("send ok!\n");
+            //printf("%d %d %d %d", RxBuf[0], RxBuf[1], RxBuf[2], RxBuf[3]);
+            //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+            //HAL_Delay(100);
+        //}
+        //else
+        //{
+            //HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+        //}
         
     }
     /* USER CODE END WHILE */

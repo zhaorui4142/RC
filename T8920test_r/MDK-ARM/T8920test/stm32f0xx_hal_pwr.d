@@ -7,14 +7,14 @@ t8920test\stm32f0xx_hal_pwr.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f0xx.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f030x6.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/CMSIS/Include/core_cm0.h
-t8920test\stm32f0xx_hal_pwr.o: D:\Program Files\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+t8920test\stm32f0xx_hal_pwr.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/CMSIS/Include/core_cmInstr.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/CMSIS/Include/cmsis_armcc.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/CMSIS/Include/core_cmFunc.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/CMSIS/Device/ST/STM32F0xx/Include/system_stm32f0xx.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h
-t8920test\stm32f0xx_hal_pwr.o: D:\Program Files\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+t8920test\stm32f0xx_hal_pwr.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_rcc_ex.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio.h
 t8920test\stm32f0xx_hal_pwr.o: ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_gpio_ex.h

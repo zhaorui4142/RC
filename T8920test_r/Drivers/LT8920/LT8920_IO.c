@@ -52,9 +52,9 @@ bool LT8920_Init(void)
 
     LT8920_CS_HIGH();
     LT8920_RST_LOW();
-    HAL_Delay(2);
+    HAL_Delay(6);
 	LT8920_RST_HIGH();
-	HAL_Delay(5);
+	HAL_Delay(10);
 
     //初始化寄存器
 	WriteReg( 0, 0x6f, 0xe0 );
@@ -109,10 +109,10 @@ int LT8920_SelectIdleChannel(uint8_t ch_start, uint8_t ch_end, uint32_t listen_m
     bool selected = true;
     uint8_t ch;
     //从第一个通道开始，检查通道占用
-    for(ch=ch_start; ch<=ch_end; ch+=8)
+    for(ch=ch_start; ch<=ch_end; ch+=LT8920_CH_INTERVAL)
     {
         //TX_EN=0 RX_EN=1
-        WriteReg(7, 0x00, (0x80|ch));
+        WriteReg(7, 0x00, (0x80|(ch+0x30)));
         Delay_us(2);
         
         //每个通道检测ms_ch
@@ -127,7 +127,7 @@ int LT8920_SelectIdleChannel(uint8_t ch_start, uint8_t ch_end, uint32_t listen_m
             }
             Delay_us(2);
         }
-        WriteReg(7, 0x00, ch);
+        WriteReg(7, 0x00, ch+0x30);
         Delay_us(2);
         
         //选定通道
@@ -184,6 +184,7 @@ uint16_t ReadReg(uint8_t addr)
     HAL_SPI_Transmit(&hspi1, &addr, 1, 500);
     Delay_us(1);
     HAL_SPI_Receive(&hspi1, &RegH, 1, 500);
+    Delay_us(1);
     HAL_SPI_Receive(&hspi1, &RegL, 1, 500);
     Delay_us(1);
     
@@ -220,7 +221,11 @@ bool LT8920_Transmit(uint8_t deviceID, uint8_t fun, uint8_t* data, uint8_t len, 
     HAL_SPI_Transmit(&hspi1, &deviceID, 1, 500);//写入ID
     HAL_SPI_Transmit(&hspi1, &fun, 1, 500);//写入功能码
     Delay_us(1);
-    HAL_SPI_Transmit(&hspi1, data, len-2, 500);//写入其他字节
+    for(int i=2; i<len; i++)
+    {
+        HAL_SPI_Transmit(&hspi1, data+i-2, 1, 500);//写入其他字节
+        //Delay_us(1);
+    }
 	Delay_us(1);
 	LT8920_CS_HIGH();
     Delay_us(1);
@@ -230,8 +235,13 @@ bool LT8920_Transmit(uint8_t deviceID, uint8_t fun, uint8_t* data, uint8_t len, 
 	while((HAL_GetTick() - start) < timeout)
 	{
 		if(LT8920_PKT_READ() != GPIO_PIN_RESET)
-			return true;	
+        {
+            //TX_EN=0 RX_EN=0
+            WriteReg(7, 0x00, TxRxChannel); 
+			return true;	}
 	}
+    //TX_EN=0 RX_EN=0
+	WriteReg(7, 0x00, TxRxChannel); 
     return false;
 }
 
@@ -261,7 +271,6 @@ bool LT8920_Receive(uint8_t* deviceID, uint8_t* fun, uint8_t* data, uint8_t *len
         //数据包接收完后pkt才置位
         if(LT8920_PKT_READ() != GPIO_PIN_RESET)
         {
-            printf("pkt ok!");
             //CRC校验
             if((ReadReg(48) & 0x8000) == 0)
             {
@@ -271,18 +280,30 @@ bool LT8920_Receive(uint8_t* deviceID, uint8_t* fun, uint8_t* data, uint8_t *len
                 HAL_SPI_Transmit(&hspi1, &addr, 1, 500);//写入地址
                 Delay_us(1);
                 HAL_SPI_Receive(&hspi1, len, 1, 500);//接收数据长度,
-                HAL_SPI_Receive(&hspi1, deviceID, 1, 500);//接收ID
-                HAL_SPI_Receive(&hspi1, fun, 1, 500);//接收功能码
-                HAL_SPI_Receive(&hspi1, data, (*len)-2, 500);//读取剩下的数据
-                Delay_us(1);
-                LT8920_CS_HIGH();
-                Delay_us(1);
-                WriteReg(7, 0x00, TxRxChannel); //TX_EN=0 RX_EN=0关闭接收
-                printf("ReceiveBytes: %x %x %x %x %x %x %x\n",*len, *deviceID, *fun, data[0], data[1],data[2],data[3]);
-                //计算实际的数据长度
-                (*len) -= 2;
-                return true;       
-            }
+                if(*len>=2)
+                {
+                    HAL_SPI_Receive(&hspi1, deviceID, 1, 500);//接收ID
+                    HAL_SPI_Receive(&hspi1, fun, 1, 500);//接收功能码
+                    for(int i=2; i < *len; i++)
+                    {
+                        HAL_SPI_Receive(&hspi1, data+i-2, 1, 500);//读取剩下的数据
+                    }
+                    Delay_us(1);
+                    LT8920_CS_HIGH();
+                    Delay_us(1);
+                    WriteReg(7, 0x00, TxRxChannel); //TX_EN=0 RX_EN=0关闭接收
+
+                    //计算实际的数据长度
+                    (*len) -= 2;
+                    return true;  
+                }
+                else
+                {
+                   WriteReg(7, 0x00, TxRxChannel); 
+                    return false; 
+                }
+                
+            } 
         }
     }
     //接收超时

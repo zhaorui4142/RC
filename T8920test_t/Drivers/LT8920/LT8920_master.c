@@ -28,8 +28,10 @@ static uint8_t TxRxBytes;
 static uint8_t DeviceID;
 static uint8_t LockedSlaveID;
 static uint8_t LockedSlaveIndex;
-//static bool    LockedFlag;
-static uint8_t TxBuf[10];
+
+static uint8_t TxBuf[32];
+static uint8_t RxBuf[32];
+static uint8_t id, report_id, report_cmd, report_bytes;
 
 /*******************************************************************************
 *功能说明: 初始化为主机
@@ -42,7 +44,7 @@ bool LT8920_MasterInit(uint8_t packet_length)
         if(LT8920_Init())
         {
             //自动选择通道
-            LT8920_SelectIdleChannel(0, 80, 100, 20);
+            LT8920_SelectIdleChannel(0, LT8920_CH_TOP, 100, 20);
 
             //初始化内部变量
             TxRxBytes = packet_length;
@@ -60,28 +62,26 @@ bool LT8920_MasterInit(uint8_t packet_length)
 bool LT8920_PairingRequest(uint32_t waiting_ms)
 {
     //发送广播数据包
-    //uint8_t buf[TxRxBytes];
     TxBuf[0] = DeviceID;
-    TxBuf[1] = LT8920_GetChannel();//发送使用的频道
-    
+    TxBuf[1] = 64;//LT8920_GetChannel();//发送使用的频道
+    LT8920_SetChannel(64);
     if(++TxBuf[3]==255)
     {
         TxBuf[2] ++;
     }
-    
+
     if(LT8920_Transmit(DeviceID, FUN_PAIR_REQUEST, TxBuf, TxRxBytes, 100))
     {
         //等待从机回应
-        uint8_t respones, receiverID, receivedBytes;
-        if(LT8920_Receive(&receiverID, &respones, TxBuf, &receivedBytes, waiting_ms))
+        if(LT8920_Receive(&report_id, &report_cmd, RxBuf, &report_bytes, waiting_ms))
         {
-            if(respones == FUN_PAIR_RESPONSE)
+            if(report_cmd == FUN_PAIR_RESPONSE)
             {
                 //将从机的ID写入flash
-                LockedSlaveID = receiverID;
-                LockedSlaveIndex = SaveSlaveID(receiverID);
+                LockedSlaveID = report_id;
+                LockedSlaveIndex = SaveSlaveID(report_id);
                 return true;
-            }  
+            }
         }
     }
     return false;
@@ -92,20 +92,18 @@ bool LT8920_PairingRequest(uint32_t waiting_ms)
 *******************************************************************************/
 bool LT8920_FindSlave(void)
 {
-    uint8_t id, buf[TxRxBytes];
-    uint8_t report_id,report_cmd, report_bytes;
     for(int i=0; i<MAX_SAVED_ID; i++)
     {
         //调出从机ID
         if(LoadSavedID(i, &id))
         {
             //往这个从机发数据
-            buf[0] = id;                    //id
-            buf[1] = LT8920_GetChannel();   //ch
-            LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, buf, TxRxBytes, 100);
+            TxBuf[0] = id;                    //id
+            TxBuf[1] = LT8920_GetChannel();   //ch
+            LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, TxBuf, TxRxBytes, 100);
         
             //等待从机返回数据
-            if(LT8920_Receive(&report_id, &report_cmd, buf, &report_bytes, WAIT_SLAVE_RESPOND_MS))
+            if(LT8920_Receive(&report_id, &report_cmd, TxBuf, &report_bytes, WAIT_SLAVE_RESPOND_MS))
             {
                 if(report_cmd == FUN_FIND_RESPONSE)
                 {
@@ -125,8 +123,6 @@ bool LT8920_FindSlave(void)
 *******************************************************************************/
 bool LT8920_ChangeSlave(void)
 {
-    uint8_t id, buf[TxRxBytes];
-    uint8_t report_id,report_cmd,report_bytes;
     int idx = LockedSlaveIndex, i = 0;
     
     while(i++ < MAX_SAVED_ID)
@@ -135,12 +131,12 @@ bool LT8920_ChangeSlave(void)
 		if(LoadSavedID(idx, &id))
 		{
 			//往这个从机发数据
-			buf[0] = id;        			//id
-			buf[1] = LT8920_GetChannel();   //ch
-			LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, buf, TxRxBytes, 100);
+			TxBuf[0] = id;        			//id
+			TxBuf[1] = LT8920_GetChannel();   //ch
+			LT8920_Transmit(DeviceID, FUN_FIND_SLAVE, TxBuf, TxRxBytes, 100);
         
 			//等待从机返回数据
-			if(LT8920_Receive(&report_id, &report_cmd, buf, &report_bytes, WAIT_SLAVE_RESPOND_MS))
+			if(LT8920_Receive(&report_id, &report_cmd, TxBuf, &report_bytes, WAIT_SLAVE_RESPOND_MS))
 			{
 				if(report_cmd == FUN_FIND_RESPONSE)
 				{
@@ -164,7 +160,6 @@ bool LT8920_ChangeSlave(void)
 *******************************************************************************/
 bool LT8920_CommunicateToSlaveWithFeedback(uint8_t* tx, uint8_t* rx, uint8_t* lost_count)
 {
-    uint8_t report_id,report_cmd,report_bytes;
 
     //发送数据
 	LT8920_Transmit(DeviceID, FUN_CTRL_REQUEST, tx, TxRxBytes, 100);

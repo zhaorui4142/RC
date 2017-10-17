@@ -13,7 +13,7 @@
 
 
 //内部函数声明区
-bool TxRxBytes(uint8_t* tx, uint8_t* rx, uint8_t bytes); //串行口输入输出
+bool ReadWriteSpi(uint8_t* tx, uint8_t* rx, uint8_t bytes); //串行口输入输出
 void SendCommandBytes(uint8_t* string, uint8_t len);
 void ReconfigGamepad(void);
 bool EnablePressures(void);
@@ -21,13 +21,16 @@ void EnableRumble(void);
 uint8_t ReadType(void);
 
 //静态变量声明区
-static uint8_t CMD_EnterConfig[5]   = {0x01,0x43,0x00,0x01,0x00};
-static uint8_t CMD_ReadType[9]      = {0x01,0x45,0x00,0x5A,0x5A,0x5A,0x5A,0x5A,0x5A};
-static uint8_t CMD_SetMode[9]       = {0x01,0x44,0x00,0x01,0x03,0x00,0x00,0x00,0x00};
-static uint8_t CMD_SetBytesLarge[9] = {0x01,0x4F,0x00,0xFF,0xFF,0x03,0x00,0x00,0x00};
-static uint8_t CMD_ExitConfig[9]    = {0x01,0x43,0x00,0x00,0x5A,0x5A,0x5A,0x5A,0x5A};
-static uint8_t CMD_EnableRumble[5]  = {0x01,0x4D,0x00,0x00,0x01};
-static uint8_t PS2data[21];
+__align(4) static uint8_t CMD_EnterConfig[5]   = {0x01,0x43,0x00,0x01,0x00};
+__align(4) static uint8_t CMD_ReadType[9]      = {0x01,0x45,0x00,0x5A,0x5A,0x5A,0x5A,0x5A,0x5A};
+__align(4) static uint8_t CMD_SetMode[9]       = {0x01,0x44,0x00,0x01,0x03,0x00,0x00,0x00,0x00};
+__align(4) static uint8_t CMD_SetBytesLarge[9] = {0x01,0x4F,0x00,0xFF,0xFF,0x03,0x00,0x00,0x00};
+__align(4) static uint8_t CMD_ExitConfig[9]    = {0x01,0x43,0x00,0x00,0x5A,0x5A,0x5A,0x5A,0x5A};
+__align(4) static uint8_t CMD_EnableRumble[5]  = {0x01,0x4D,0x00,0x00,0x01};
+__align(4) static uint8_t PS2data[21];
+
+__align(4) static uint8_t TxBuf[32];
+__align(4) static uint8_t RxBuf[32];
 
 static uint8_t read_delay,controller_type;
 static uint16_t buttons,last_buttons;
@@ -95,21 +98,27 @@ uint8_t PS2X_GetAnalogValue(uint8_t button)
 
 /****************************************************************************************/
 //串行口输入输出
-bool TxRxBytes(uint8_t* tx, uint8_t* rx, uint8_t bytes) 
+bool ReadWriteSpi(uint8_t* tx, uint8_t* rx, uint8_t bytes) 
 {
     if(rx != NULL)
     {
-        if(HAL_SPI_TransmitReceive(&hspi1, tx, rx, bytes, 500) == HAL_OK)
-            return true;
-        else
-            return false;
+        for(int i=0; i<bytes; i++)
+        {
+            Delay_us(41);
+            if(HAL_SPI_TransmitReceive(&hspi1, tx+i, rx+i, 1, 500) != HAL_OK)
+                return false;
+        }
+        return true;
     }
     else
     {
-        if(HAL_SPI_Transmit(&hspi1, tx, bytes, 500) == HAL_OK)
-            return true;
-        else
-            return false;
+        for(int i=0; i<bytes; i++)
+        {
+            Delay_us(41);
+            if(HAL_SPI_Transmit(&hspi1, tx+i, 1, 500) != HAL_OK)
+                return false;
+        }
+        return true;
     }
     
 }
@@ -122,7 +131,7 @@ bool PS2X_ReadGamepad(bool motor1, uint8_t motor2)
     //振动设置motor1  0xFF开，其他关，motor2  0x40~0xFF
     //检测手柄等待时间
     uint32_t ElapsedMsFromLastRead = HAL_GetTick() - last_read;
-
+printf("PS2X_ReadGamepad 1 \n");
     if (ElapsedMsFromLastRead > 1500) //waited to long
         ReconfigGamepad();
 
@@ -132,7 +141,11 @@ bool PS2X_ReadGamepad(bool motor1, uint8_t motor2)
     if(motor2 < 0x40)
         motor2 = 0x40; //noting below 40 will make it spin
 
-    uint8_t TxBuf[21] = {0x01,0x42,0,motor1,motor2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    TxBuf[0] = 0x01;
+    TxBuf[1] = 0x42;
+    TxBuf[2] = 0;
+    TxBuf[3] = motor1;
+    TxBuf[4] = motor2;
 
     // Try a few times to get valid data...
     for (uint8_t RetryCnt = 0; RetryCnt < 5; RetryCnt++) 
@@ -140,13 +153,13 @@ bool PS2X_ReadGamepad(bool motor1, uint8_t motor2)
         // low enable joystick
         PS2X_ATT_CLR(); 
 
-        HAL_Delay(CTRL_BYTE_DELAY);
+        //HAL_Delay(CTRL_BYTE_DELAY);
         //Send the command to send button and joystick data;
-        TxRxBytes(TxBuf, PS2data, 9); 
+        ReadWriteSpi(TxBuf, PS2data, 9); 
 
         //if controller is in full data return mode, get the rest of data
         if(PS2data[1] == 0x79)  
-            TxRxBytes(TxBuf+9, PS2data+9, 12); 
+            ReadWriteSpi(TxBuf+9, PS2data+9, 12); 
 
         // HI disable joystick
         PS2X_ATT_SET(); 
@@ -185,12 +198,14 @@ bool PS2X_ReadGamepad(bool motor1, uint8_t motor2)
 //配置
 uint8_t PS2X_ConfigGamepad(bool pressures, bool rumble) 
 {
+    printf("start config gamepad \n");
     //new error checking. First, read gamepad a few times to see if it's talking
     PS2X_ReadGamepad(false, 0x00);
     PS2X_ReadGamepad(false, 0x00);
 
     //see if it talked - see if mode came back. 
     //If still anything but 41, 73 or 79, then it's not talking
+    printf("PS2data1: %x \n", PS2data[1]);
     if(PS2data[1] != 0x41 && PS2data[1] != 0x73 && PS2data[1] != 0x79)
     { 
         return 1; //return error code 1
@@ -199,7 +214,7 @@ uint8_t PS2X_ConfigGamepad(bool pressures, bool rumble)
     //try setting mode, increasing delays if need be.
     read_delay = 1;
     
-    uint8_t RxBuf[9];
+
     
     for(int y = 0; y <= 10; y++) 
     {
@@ -209,7 +224,7 @@ uint8_t PS2X_ConfigGamepad(bool pressures, bool rumble)
         HAL_Delay(CTRL_BYTE_DELAY);
         PS2X_ATT_CLR(); 
         HAL_Delay(CTRL_BYTE_DELAY);
-        TxRxBytes(CMD_ReadType, RxBuf, 9); 
+        ReadWriteSpi(CMD_ReadType, RxBuf, 9); 
         PS2X_ATT_SET(); 
 
         controller_type = RxBuf[3];
@@ -255,7 +270,7 @@ uint8_t PS2X_ConfigGamepad(bool pressures, bool rumble)
 void SendCommandBytes(uint8_t* string, uint8_t len) 
 {
     PS2X_ATT_CLR(); // low enable joystick
-    TxRxBytes(string, NULL, len); 
+    ReadWriteSpi(string, NULL, len); 
     PS2X_ATT_SET(); //high disable joystick
     HAL_Delay(read_delay);                  //wait a few
 }

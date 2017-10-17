@@ -24,7 +24,8 @@
 #define LT8920_PKT_READ()       HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1)
 
 //常数宏
-
+#define LT8920_CH_INTERVAL 32
+#define LT8920_CH_TOP 79
 
 //全局函数声明
 

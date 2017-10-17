@@ -97,7 +97,6 @@ bool LT8920_Init(void)
         return false;
     else
         return true;
-   
 }
 
 /*******************************************************************************
@@ -110,7 +109,7 @@ int LT8920_SelectIdleChannel(uint8_t ch_start, uint8_t ch_end, uint32_t listen_m
     bool selected = true;
     uint8_t ch;
     //从第一个通道开始，检查通道占用
-    for(ch=ch_start; ch<=ch_end; ch+=8)
+    for(ch=ch_start; ch<=ch_end; ch+=LT8920_CH_INTERVAL)
     {
         //TX_EN=0 RX_EN=1
         WriteReg(7, 0x00, (0x80|(ch+0x30)));
@@ -222,8 +221,12 @@ bool LT8920_Transmit(uint8_t deviceID, uint8_t fun, uint8_t* data, uint8_t len, 
     HAL_SPI_Transmit(&hspi1, &deviceID, 1, 500);//写入ID
     HAL_SPI_Transmit(&hspi1, &fun, 1, 500);//写入功能码
     Delay_us(1);
-    HAL_SPI_Transmit(&hspi1, data, len-2, 500);//写入其他字节
-	Delay_us(1);
+    for(int i=2; i<len; i++)
+    {
+        HAL_SPI_Transmit(&hspi1, data+i-2, 1, 500);//写入其他字节
+        //Delay_us(1);
+    }
+    
 	LT8920_CS_HIGH();
     Delay_us(1);
 	WriteReg(7, 0x01, TxRxChannel); //TX_EN=1 RX_EN=0
@@ -232,8 +235,14 @@ bool LT8920_Transmit(uint8_t deviceID, uint8_t fun, uint8_t* data, uint8_t len, 
 	while((HAL_GetTick() - start) < timeout)
 	{
 		if(LT8920_PKT_READ() != GPIO_PIN_RESET)
-			return true;	
+        {
+            //TX_EN=0 RX_EN=0
+            WriteReg(7, 0x00, TxRxChannel); 
+			return true;	}
 	}
+
+    //TX_EN=0 RX_EN=0
+	WriteReg(7, 0x00, TxRxChannel); 
     return false;
 }
 
@@ -272,17 +281,30 @@ bool LT8920_Receive(uint8_t* deviceID, uint8_t* fun, uint8_t* data, uint8_t *len
                 HAL_SPI_Transmit(&hspi1, &addr, 1, 500);//写入地址
                 Delay_us(1);
                 HAL_SPI_Receive(&hspi1, len, 1, 500);//接收数据长度,
-                HAL_SPI_Receive(&hspi1, deviceID, 1, 500);//接收ID
-                HAL_SPI_Receive(&hspi1, fun, 1, 500);//接收功能码
-                HAL_SPI_Receive(&hspi1, data, (*len)-2, 500);//读取剩下的数据
-                Delay_us(1);
-                LT8920_CS_HIGH();
-                Delay_us(1);
-                WriteReg(7, 0x00, TxRxChannel); //TX_EN=0 RX_EN=0关闭接收
-                //计算实际的数据长度
-                (*len) -= 2;
-                return true;       
-            }
+                if(*len>=2)
+                {
+                    HAL_SPI_Receive(&hspi1, deviceID, 1, 500);//接收ID
+                    HAL_SPI_Receive(&hspi1, fun, 1, 500);//接收功能码
+                    for(int i=2; i < *len; i++)
+                    {
+                        HAL_SPI_Receive(&hspi1, data+i-2, 1, 500);//读取剩下的数据
+                    }
+                    Delay_us(1);
+                    LT8920_CS_HIGH();
+                    Delay_us(1);
+                    WriteReg(7, 0x00, TxRxChannel); //TX_EN=0 RX_EN=0关闭接收
+
+                    //计算实际的数据长度
+                    (*len) -= 2;
+                    return true;  
+                }
+                else
+                {
+                   WriteReg(7, 0x00, TxRxChannel); 
+                    return false; 
+                }
+                
+            }        
         }
     }
     //接收超时

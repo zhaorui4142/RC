@@ -15,7 +15,7 @@
         <TargetCommonOption>
           <Device>STM32F030F4</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F0xx_DFP.1.4.0</PackID>
+          <PackID>Keil.STM32F0xx_DFP.1.5.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000-0x20000FFF) IROM(0x8000000-0x8003FFF) CLOCK(8000000) CPUTYPE("Cortex-M0")</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -133,11 +133,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4107</DriverSelection>
+            <DriverSelection>4100</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>STLink\ST-LINKIII-KEIL_SWO.dll</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -503,11 +503,6 @@
               <FileName>LT8920_master.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Drivers\LT8920\LT8920_master.c</FilePath>
-            </File>
-            <File>
-              <FileName>LT8920_slave.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Drivers\LT8920\LT8920_slave.c</FilePath>
             </File>
           </Files>
         </Group>
