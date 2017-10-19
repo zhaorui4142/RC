@@ -81,31 +81,31 @@ bool CheckTimeout(uint32_t start_time, uint32_t timeout);
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+    /* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
+    /* USER CODE END 1 */
 
-  /* MCU Configuration----------------------------------------------------------*/
+    /* MCU Configuration----------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    HAL_Init();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+    /* Configure the system clock */
+    SystemClock_Config();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_SPI1_Init();
-  MX_TIM17_Init();
-  MX_USART1_UART_Init();
-  MX_CRC_Init();
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_SPI1_Init();
+    MX_TIM17_Init();
+    MX_USART1_UART_Init();
+    MX_CRC_Init();
 
     printf("Transmeter power on!\n");
     /* USER CODE BEGIN 2 */
     
     PS2X_ConfigSPI();
-    uint8_t ret = PS2X_ConfigGamepad(false, true);
-    printf("gamepad init: %d \n", ret);
+    PS2X_ConfigGamepad(false, true);
+    PS2X_ConfigGamepad(false, true);
     //if(LT8920_MasterInit(4))
     //{
         //printf("LT8920 init ok!\n");
@@ -115,8 +115,8 @@ int main(void)
     
     //HAL_Delay(100);
     //printf("Select ch = %d \n",LT8920_GetChannel());
-    while(1)
-    {
+    //while(1)
+    //{
                     //主机发送配对请求
             //if(LT8920_PairingRequest(100))
             //{
@@ -127,7 +127,7 @@ int main(void)
         //{
 
         //}
-    }
+    //}
     
     //LT8920_FindSlave(void);
     
@@ -142,7 +142,15 @@ int main(void)
     {
   
         //读一次按键
-      
+        PS2X_ConfigSPI();
+        PS2X_ReadGamepad(false,0x00);
+        if(PS2X_IsButtonOnPress(PSB_CIRCLE))
+        {
+            printf("Rx:%x RY:%x LX:%x LY:%x\n",PS2X_GetAnalogValue(PSS_RX), PS2X_GetAnalogValue(PSS_RY), PS2X_GetAnalogValue(PSS_LX), PS2X_GetAnalogValue(PSS_LY));
+        }
+            
+        LT8920_ConfigSPI();
+        HAL_Delay(20);
         //发送一次数据
         //if(LT8920_CommunicateToSlaveWithFeedback(TxBuf, RxBuf, &LostCount))
         //{
